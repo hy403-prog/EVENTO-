@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema Elite de Elección de Belleza</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+:root{
+  --gold:#d4af37;--gold-light:#f4d03f;--black:#0a0a0a;
+  --white:#f5f5f5;--neon-gold:#ffd700;--neon-purple:#b833ff;
+  --neon-cyan:#00ffff;--br-lg:12px;--br-md:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:linear-gradient(135deg,#0a0a0a 0%,#1a1a1a 100%);color:var(--white);
+  font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;overflow-x:hidden;min-height:100vh}
+.hidden{display:none!important}
+
+.card{background:rgba(15,15,15,.92);border:1px solid rgba(212,175,55,.3);border-radius:var(--br-lg);
+  padding:1.5rem;margin-bottom:1rem;backdrop-filter:blur(10px);
+  box-shadow:0 8px 32px rgba(212,175,55,.1),inset 0 1px 0 rgba(255,255,255,.07);transition:all .3s}
+.card:hover{border-color:rgba(212,175,55,.55)}
+.screen{padding:2rem;max-width:1100px;margin:0 auto}
+
+.hdr{padding:1.4rem 2rem;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:2px solid rgba(212,175,55,.5);box-shadow:0 4px 20px rgba(212,175,55,.12)}
+.hdr-admin{background:linear-gradient(135deg,rgba(212,175,55,.18),rgba(20,20,20,.97));border-bottom-color:var(--gold)}
+.hdr-jury{background:linear-gradient(135deg,rgba(0,200,100,.15),rgba(20,20,20,.97));border-bottom-color:rgba(0,200,100,.6)}
+.hdr h1{font-size:22px;font-weight:700;background:linear-gradient(135deg,var(--gold),var(--neon-gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hdr p{font-size:12px;opacity:.7;margin-top:4px}
+.hdr-badge{background:rgba(212,175,55,.18);padding:6px 14px;border-radius:20px;font-size:12px;
+  border:1px solid rgba(212,175,55,.45);color:var(--gold-light)}
+
+.btn{padding:10px 20px;border-radius:var(--br-md);border:1.5px solid rgba(212,175,55,.4);
+  background:rgba(212,175,55,.1);color:var(--white);cursor:pointer;font-size:13px;font-weight:600;
+  transition:all .3s;text-transform:uppercase;letter-spacing:.5px;position:relative;overflow:hidden}
+.btn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);transition:left .5s}
+.btn:hover::before{left:100%}
+.btn:hover{border-color:var(--gold);background:rgba(212,175,55,.22);
+  box-shadow:0 0 18px rgba(212,175,55,.35);transform:translateY(-2px)}
+.btn-purple{background:linear-gradient(135deg,rgba(184,51,255,.18),rgba(212,175,55,.12));
+  border-color:var(--neon-purple);color:var(--neon-gold)}
+.btn-purple:hover{box-shadow:0 0 18px var(--neon-purple)}
+.btn-teal{background:linear-gradient(135deg,rgba(0,200,100,.18),rgba(212,175,55,.1));border-color:rgba(0,200,100,.75)}
+.btn-teal:hover{box-shadow:0 0 18px rgba(0,200,100,.5)}
+.btn-red{background:linear-gradient(135deg,rgba(230,30,30,.18),rgba(212,175,55,.08));border-color:rgba(230,30,30,.75)}
+.btn-red:hover{box-shadow:0 0 18px rgba(230,30,30,.5)}
+.btn-amber{background:linear-gradient(135deg,rgba(255,165,0,.18),rgba(212,175,55,.12));border-color:var(--gold)}
+.btn-amber:hover{box-shadow:0 0 18px rgba(255,165,0,.5)}
+.btn-sm{padding:6px 12px;font-size:11px}
+.btn-full{width:100%;padding:13px;font-size:15px}
+
+.inp{border:1.5px solid rgba(212,175,55,.3);border-radius:var(--br-md);padding:10px 14px;font-size:14px;
+  width:100%;background:rgba(20,20,20,.85);color:var(--white);transition:all .3s;font-family:inherit}
+.inp::placeholder{color:rgba(255,255,255,.35)}
+.inp:focus{outline:none;border-color:var(--gold);
+  box-shadow:0 0 14px rgba(212,175,55,.35),inset 0 0 6px rgba(212,175,55,.08);background:rgba(30,30,30,.95)}
+label{font-size:12px;color:rgba(212,175,55,.85);margin-bottom:5px;display:block;
+  font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+
+.alert{padding:12px 16px;border-radius:var(--br-md);font-size:13px;margin-bottom:1rem;border-left:4px solid;backdrop-filter:blur(10px)}
+.alert-warn{background:rgba(212,175,55,.12);color:var(--gold-light);border-left-color:var(--gold)}
+.alert-info{background:rgba(0,150,200,.12);color:rgba(100,200,255,.9);border-left-color:rgba(0,150,200,.8)}
+
+.tabs{display:flex;gap:6px;margin-bottom:1.5rem;border-bottom:1px solid rgba(212,175,55,.2);flex-wrap:wrap}
+.tab{padding:10px 18px;border-radius:var(--br-md) var(--br-md) 0 0;cursor:pointer;font-size:13px;
+  border:1px solid transparent;background:transparent;color:rgba(255,255,255,.55);
+  transition:all .3s;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.tab:hover{background:rgba(212,175,55,.08);color:var(--gold)}
+.tab.on{background:linear-gradient(135deg,rgba(212,175,55,.22),rgba(212,175,55,.1));color:var(--gold);
+  border:1px solid rgba(212,175,55,.45);border-bottom-color:var(--gold);box-shadow:0 4px 12px rgba(212,175,55,.18)}
+
+/* ── SCORE BUTTONS ── */
+.score-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:11px;
+  background:linear-gradient(135deg,rgba(212,175,55,.07),rgba(212,175,55,.02));
+  border-radius:var(--br-md);border:1px solid rgba(212,175,55,.18)}
+.score-lbl{font-size:13px;font-weight:600;color:var(--gold-light);flex-shrink:0}
+.score-val{font-size:19px;font-weight:700;color:var(--neon-gold);min-width:34px;
+  text-align:center;text-shadow:0 0 8px rgba(212,175,55,.5);flex-shrink:0}
+.btns10{display:flex;gap:3px;flex-wrap:wrap;flex:1}
+.sb{width:27px;height:27px;border:1.5px solid rgba(212,175,55,.35);border-radius:4px;
+  background:rgba(20,20,20,.85);cursor:pointer;font-size:11px;display:flex;align-items:center;
+  justify-content:center;transition:all .18s;color:rgba(255,255,255,.65);font-weight:600;flex-shrink:0}
+.sb:hover:not(.lk){background:rgba(212,175,55,.18);border-color:var(--gold);box-shadow:0 0 8px rgba(212,175,55,.3)}
+.sb.on{background:linear-gradient(135deg,var(--gold),var(--neon-gold));color:var(--black);
+  border-color:var(--gold);box-shadow:0 0 12px rgba(212,175,55,.55);font-weight:700}
+.sb.lk{cursor:not-allowed;opacity:.45}
+
+.bar{background:rgba(20,20,20,.85);border-radius:4px;height:20px;overflow:hidden;margin-top:4px;
+  border:1px solid rgba(212,175,55,.18)}
+.bar-f{height:100%;border-radius:4px;
+  background:linear-gradient(90deg,var(--gold),var(--neon-gold));transition:width .4s;
+  box-shadow:0 0 8px rgba(212,175,55,.45)}
+.cbar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.cbar-name{font-size:13px;min-width:120px;text-align:right;color:var(--gold-light);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.cbar-wrap{flex:1;background:rgba(20,20,20,.85);border-radius:4px;height:24px;overflow:hidden;
+  border:1px solid rgba(212,175,55,.18)}
+.cbar-inner{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;
+  font-size:12px;color:var(--black);font-weight:700;
+  background:linear-gradient(90deg,var(--gold),var(--neon-gold))}
+
+.pos-badge{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;
+  border:2px solid rgba(212,175,55,.5);box-shadow:0 0 12px rgba(212,175,55,.35)}
+.p1{background:linear-gradient(135deg,var(--gold),var(--neon-gold));color:var(--black)}
+.p2{background:linear-gradient(135deg,rgba(192,192,192,.85),rgba(220,220,220,.85));color:var(--black)}
+.p3{background:linear-gradient(135deg,rgba(205,127,50,.85),rgba(255,165,0,.65));color:var(--black)}
+.px{background:rgba(212,175,55,.12);color:var(--gold-light)}
+.rr{display:grid;grid-template-columns:42px 1fr 90px;gap:10px;align-items:center;
+  padding:11px 0;border-bottom:1px solid rgba(212,175,55,.18)}
+.rr:last-child{border-bottom:none}
+
+.role-card{border:2px solid rgba(212,175,55,.28);border-radius:var(--br-lg);padding:2rem 1.5rem;
+  cursor:pointer;transition:all .3s;text-align:center;background:rgba(22,22,22,.65);backdrop-filter:blur(10px)}
+.role-card:hover{border-color:var(--gold);background:rgba(212,175,55,.08);
+  box-shadow:0 8px 28px rgba(212,175,55,.18);transform:translateY(-4px)}
+.role-card.sel{border:2px solid var(--gold);
+  background:linear-gradient(135deg,rgba(212,175,55,.18),rgba(212,175,55,.04));
+  box-shadow:0 0 28px rgba(212,175,55,.38)}
+
+.part-block{border:1px solid rgba(212,175,55,.28);border-radius:var(--br-md);padding:14px;
+  margin-bottom:12px;background:rgba(20,20,20,.65);backdrop-filter:blur(10px);transition:all .3s}
+.part-block:hover{border-color:rgba(212,175,55,.55)}
+.part-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.crit-tag{display:inline-flex;align-items:center;gap:5px;background:rgba(212,175,55,.18);
+  color:var(--gold-light);border-radius:20px;padding:5px 12px;font-size:12px;margin:3px;
+  border:1px solid rgba(212,175,55,.38);font-weight:500}
+
+.cand-row{display:flex;gap:10px;align-items:center;margin-bottom:10px;padding:10px;
+  background:rgba(212,175,55,.04);border-radius:var(--br-md);border:1px solid rgba(212,175,55,.18);transition:all .3s}
+.cand-row:hover{background:rgba(212,175,55,.09);border-color:rgba(212,175,55,.38)}
+.cand-thumb{width:54px;height:54px;border-radius:var(--br-md);object-fit:cover;object-position:center top;
+  border:2px solid rgba(212,175,55,.5);flex-shrink:0;box-shadow:0 0 10px rgba(212,175,55,.28)}
+.cand-thumb-placeholder{width:54px;height:54px;border-radius:var(--br-md);
+  background:rgba(212,175,55,.06);border:2px dashed rgba(212,175,55,.38);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .3s;color:var(--gold-light)}
+.cand-thumb-placeholder:hover{background:rgba(212,175,55,.14);border-color:var(--gold)}
+.upload-btn{padding:5px 10px;font-size:11px;border-radius:var(--br-md);
+  border:1px solid rgba(212,175,55,.28);background:rgba(212,175,55,.07);cursor:pointer;
+  color:var(--gold-light);transition:all .3s;font-weight:500;white-space:nowrap}
+.upload-btn:hover{background:rgba(212,175,55,.15);border-color:var(--gold)}
+
+/* ══════════════════════════════════════════════
+   JURY CARD — foto izquierda + aspectos derecha
+   ══════════════════════════════════════════════ */
+.jury-cand-card{
+  background:rgba(18,18,18,.92);
+  border:1.5px solid rgba(212,175,55,.28);
+  border-radius:var(--br-lg);
+  margin-bottom:1.5rem;
+  overflow:hidden;
+  transition:all .3s;
+  display:flex;          /* <— fila horizontal */
+  align-items:stretch;
+}
+.jury-cand-card:hover{border-color:rgba(212,175,55,.6);box-shadow:0 8px 28px rgba(212,175,55,.18)}
+
+/* Columna FOTO — ancho fijo */
+.jury-photo-col{
+  flex-shrink:0;
+  width:220px;
+  position:relative;
+  background:#111;
+  border-right:2px solid rgba(212,175,55,.28);
+  overflow:hidden;
+}
+.jury-photo-col img{
+  position:absolute;
+  top:0;left:0;
+  width:100%;height:100%;
+  object-fit:cover;
+  object-position:center top;
+  display:block;
+}
+.jury-photo-placeholder{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,rgba(212,175,55,.08),rgba(212,175,55,.02));
+  color:rgba(212,175,55,.45);gap:8px;font-size:13px;
+}
+
+/* Columna BODY — crece */
+.jury-cand-body{
+  flex:1;
+  padding:1.2rem 1.3rem;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.jury-cand-name{
+  font-size:17px;font-weight:700;margin-bottom:12px;
+  color:var(--gold-light);letter-spacing:.5px;
+  border-bottom:1px solid rgba(212,175,55,.2);padding-bottom:8px;
+}
+
+.result-cand-photo{width:48px;height:48px;border-radius:50%;object-fit:cover;object-position:center top;
+  border:2px solid rgba(212,175,55,.5);flex-shrink:0;box-shadow:0 0 10px rgba(212,175,55,.28)}
+.result-cand-avatar{width:48px;height:48px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(212,175,55,.18),rgba(212,175,55,.04));
+  border:2px solid rgba(212,175,55,.45);flex-shrink:0;display:flex;align-items:center;
+  justify-content:center;color:var(--gold);font-size:18px}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.card,.role-card,.jury-cand-card{animation:fadeIn .35s ease}
+h2{font-size:26px;font-weight:700;background:linear-gradient(135deg,var(--gold),var(--neon-gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1rem}
+h3{color:var(--gold-light);font-weight:600}
+#s-login{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center}
+
+/* Responsive */
+@media(max-width:700px){
+  .screen{padding:1rem}
+  .hdr{flex-direction:column;gap:1rem;align-items:flex-start}
+  .jury-cand-card{flex-direction:column}
+  .jury-photo-col{width:100%;height:200px;border-right:none;border-bottom:2px solid rgba(212,175,55,.28)}
+  .cbar-name{min-width:70px;font-size:11px}
+  .btns10 .sb{width:23px;height:23px;font-size:10px}
+}
+@media print{
+  .no-print{display:none!important}
+  body{background:white!important;color:black!important}
+  .card{background:white!important;border:1px solid #ccc!important;box-shadow:none!important;color:black!important}
+  .hdr{background:white!important;border-bottom:2px solid #ccc!important}
+  h1,h2,h3{color:#222!important;-webkit-text-fill-color:#222!important}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ═══ LOGIN ═══ -->
+<div id="s-login" class="screen">
+  <div style="text-align:center;margin-bottom:2rem">
+    <div style="font-size:64px;margin-bottom:12px;filter:drop-shadow(0 0 15px rgba(212,175,55,.5))">👑</div>
+    <h2 style="font-size:32px;margin-bottom:4px">Sistema Elite de Elección</h2>
+    <p style="font-size:15px;color:rgba(212,175,55,.8);margin-top:6px">Selecciona tu rol para acceder</p>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:2rem;max-width:500px;width:100%">
+    <div class="role-card" id="rc-admin" onclick="selectRole('admin')">
+      <div style="font-size:44px;margin-bottom:12px">🛡️</div>
+      <div style="font-size:17px;font-weight:700;background:linear-gradient(135deg,var(--gold),var(--neon-gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">ADMINISTRADOR</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.5);margin-top:6px">Configura y supervisa</div>
+    </div>
+    <div class="role-card" id="rc-jury" onclick="selectRole('jury')">
+      <div style="font-size:44px;margin-bottom:12px">⭐</div>
+      <div style="font-size:17px;font-weight:700;background:linear-gradient(135deg,var(--gold),var(--neon-gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">JURADO</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.5);margin-top:6px">Califica candidatas</div>
+    </div>
+  </div>
+  <div id="login-admin-fields" class="hidden card" style="margin-bottom:1rem;max-width:500px;width:100%">
+    <div style="margin-bottom:12px"><label>USUARIO</label><input class="inp" id="l-user" placeholder="admin" style="margin-top:6px"/></div>
+    <div><label>CONTRASEÑA</label><input class="inp" id="l-pass" type="password" placeholder="••••••••" style="margin-top:6px"/></div>
+  </div>
+  <div id="login-jury-fields" class="hidden card" style="margin-bottom:1rem;max-width:500px;width:100%">
+    <label>CÓDIGO DE JURADO</label>
+    <input class="inp" id="l-jcode" placeholder="Ej: JURADO1" style="margin-top:6px"/>
+  </div>
+  <div id="l-err" class="alert alert-warn hidden" style="max-width:500px;width:100%"></div>
+  <button class="btn btn-purple btn-full no-print" onclick="doLogin()" style="max-width:500px">INGRESAR AL SISTEMA</button>
+</div>
+
+<!-- ═══ ADMIN ═══ -->
+<div id="s-admin" class="hidden">
+  <div class="hdr hdr-admin no-print">
+    <div><h1>PANEL ADMINISTRADOR</h1><p id="a-evname" style="color:rgba(212,175,55,.8)">Preparando evento...</p></div>
+    <button class="btn btn-sm" onclick="logout()" style="background:rgba(212,175,55,.18);color:var(--gold);border-color:rgba(212,175,55,.5)">SALIR</button>
+  </div>
+  <div class="screen">
+    <div class="tabs no-print">
+      <div class="tab on" id="tab-setup" onclick="aTab('setup')">⚙️ CONFIGURACIÓN</div>
+      <div class="tab" id="tab-live" onclick="aTab('live')">📊 EN VIVO</div>
+      <div class="tab" id="tab-res" onclick="aTab('res')">🏆 RESULTADOS</div>
+    </div>
+
+    <div id="a-setup">
+      <div class="card">
+        <h3 style="margin-bottom:14px">Información del Evento</h3>
+        <div style="margin-bottom:12px"><label>NOMBRE DEL CERTAMEN</label><input class="inp" id="ev-name" placeholder="Ej: Reina de la Feria 2025" style="margin-top:6px"/></div>
+        <div><label>CÓDIGOS DEL JURADO (uno por línea)</label><textarea class="inp" id="ev-judges" rows="4" placeholder="JURADO1&#10;JURADO2&#10;JURADO3" style="margin-top:6px;resize:vertical"></textarea></div>
+      </div>
+      <div class="card">
+        <div class="part-hdr">
+          <h3>PARTICIPACIONES</h3>
+          <button class="btn btn-teal btn-sm" onclick="addPart()">+ AGREGAR</button>
+        </div>
+        <p style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:14px">Cada participación tiene sus propios aspectos (4–7) y candidatas con foto opcional.</p>
+        <div id="parts-list"></div>
+      </div>
+      <div id="setup-err" class="alert alert-warn hidden"></div>
+      <button class="btn btn-purple btn-full" onclick="startEvent()">▶ INICIAR ELECCIÓN</button>
+    </div>
+
+    <div id="a-live" class="hidden">
+      <div class="alert alert-info" id="live-info"></div>
+      <div class="card">
+        <h3 style="margin-bottom:12px">Estado del Jurado</h3>
+        <div id="jury-status" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:12px">Parciales Actuales</h3>
+        <div id="live-partial"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <button class="btn btn-teal" onclick="nextPart()">➡ SIGUIENTE PARTICIPACIÓN</button>
+        <button class="btn btn-red" onclick="closeVoting()">🔒 CERRAR VOTACIÓN</button>
+      </div>
+    </div>
+
+    <div id="a-res" class="hidden">
+      <div style="display:flex;gap:10px;margin-bottom:1.5rem;flex-wrap:wrap" class="no-print">
+        <button class="btn btn-purple" onclick="window.print()">🖨 IMPRIMIR</button>
+        <button class="btn btn-amber" onclick="newElection()">🔄 NUEVA (MISMO FORMATO)</button>
+        <button class="btn btn-teal" onclick="newElectionFresh()">+ NUEVA DESDE CERO</button>
+      </div>
+      <div id="results-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ JURADO ═══ -->
+<div id="s-jury" class="hidden">
+  <div class="hdr hdr-jury no-print">
+    <div><h1 id="j-evname">VOTACIÓN</h1><p id="j-whoami" style="color:rgba(0,200,100,.9)">Jurado</p></div>
+    <div class="hdr-badge" id="j-partbadge">Participación 1</div>
+  </div>
+  <div class="screen">
+    <div id="j-closed" class="hidden" style="text-align:center;padding:4rem 1rem">
+      <div style="font-size:56px;margin-bottom:12px">🏁</div>
+      <h2 style="font-size:22px;color:rgba(0,200,100,.9)">VOTACIÓN FINALIZADA</h2>
+      <p style="color:rgba(255,255,255,.55);margin-top:10px">Gracias por tu participación. El administrador tiene los resultados.</p>
+    </div>
+    <div id="j-wait" class="hidden" style="text-align:center;padding:3rem 1rem">
+      <div style="font-size:48px;margin-bottom:12px">⏳</div>
+      <h2 style="font-size:20px">PARTICIPACIÓN ENVIADA</h2>
+      <p style="font-size:14px;color:rgba(255,255,255,.55);margin-top:10px">Espera que el administrador habilite la siguiente participación.</p>
+    </div>
+    <div id="j-vote">
+      <div class="alert alert-info" style="margin-bottom:1.5rem">📷 Observa la foto de cada candidata y califica del <strong>1 al 10</strong> cada aspecto.</div>
+      <div id="j-cands"></div>
+      <div style="text-align:center;margin-top:1.5rem">
+        <button class="btn btn-amber hidden" id="j-next" onclick="juryNext()" style="padding:13px 34px;font-size:15px">➡ SIGUIENTE PARTICIPACIÓN</button>
+        <p id="j-nexthint" class="hidden" style="font-size:12px;color:rgba(255,255,255,.45);margin-top:8px">Al confirmar no podrás regresar ni editar tus calificaciones.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app -->
+<script>
+// ════════════════════════════════════════════
+//  ESTADO GLOBAL
+// ════════════════════════════════════════════
+var G={eventName:'',participations:[],judges:[],currentPart:0,
+       closed:false,votes:{},juryProg:{},started:false,judgeCode:''};
+var PHOTOS={};
+
+// ─── PERSISTENCIA ────────────────────────────
+function sv(){
+  try{
+    var slim=JSON.parse(JSON.stringify(G));
+    slim.participations=slim.participations.map(function(p){
+      return{name:p.name,criteria:p.criteria,
+             candidates:p.candidates.map(function(c){return{name:c.name};})};
+    });
+    localStorage.setItem('bq_v5',JSON.stringify(slim));
+  }catch(e){}
+  // Fotos: intentar localStorage, si falla usar sessionStorage
+  try{localStorage.setItem('bq_v5_ph',JSON.stringify(PHOTOS));}
+  catch(e){try{sessionStorage.setItem('bq_v5_ph',JSON.stringify(PHOTOS));}catch(e2){}}
+}
+
+function ld(){
+  try{
+    var s=localStorage.getItem('bq_v5');
+    if(s){
+      G=JSON.parse(s);
+      G.participations=(G.participations||[]).map(function(p){
+        return{name:p.name||'',criteria:p.criteria||[],
+               candidates:(p.candidates||[]).map(function(c){
+                 return typeof c==='string'?{name:c}:{name:c.name||''};
+               })};
+      });
+      G.votes=G.votes||{};G.juryProg=G.juryProg||{};
+    }
+  }catch(e){}
+  PHOTOS={};
+  try{var p=localStorage.getItem('bq_v5_ph');if(p)PHOTOS=JSON.parse(p)||{};}catch(e){}
+  if(!Object.keys(PHOTOS).length){
+    try{var p2=sessionStorage.getItem('bq_v5_ph');if(p2)PHOTOS=JSON.parse(p2)||{};}catch(e){}
+  }
+}
+ld();
+
+// ─── UTILIDADES ──────────────────────────────
+function photoKey(pi,ci){return 'p'+pi+'_c'+ci;}
+function show(id){document.getElementById(id).classList.remove('hidden');}
+function hide(id){document.getElementById(id).classList.add('hidden');}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function sid(s){return String(s).replace(/[^a-zA-Z0-9]/g,'_');}
+
+// ─── LOGIN ────────────────────────────────────
+var selRole='';
+function selectRole(r){
+  selRole=r;
+  document.getElementById('rc-admin').classList.toggle('sel',r==='admin');
+  document.getElementById('rc-jury').classList.toggle('sel',r==='jury');
+  document.getElementById('login-admin-fields').classList.toggle('hidden',r!=='admin');
+  document.getElementById('login-jury-fields').classList.toggle('hidden',r!=='jury');
+  document.getElementById('l-err').classList.add('hidden');
+}
+function doLogin(){
+  var err=document.getElementById('l-err');err.classList.add('hidden');
+  if(!selRole){err.textContent='⚠️ Selecciona un rol.';err.classList.remove('hidden');return;}
+  if(selRole==='admin'){
+    if(document.getElementById('l-user').value.trim()==='admin'&&
+       document.getElementById('l-pass').value==='ADMIN304'){showAdmin();return;}
+    err.textContent='❌ Usuario o contraseña incorrectos.';err.classList.remove('hidden');return;
+  }
+  var code=document.getElementById('l-jcode').value.trim().toUpperCase();
+  if(!G.started){err.textContent='⚠️ El evento aún no ha sido iniciado.';err.classList.remove('hidden');return;}
+  if(G.judges.indexOf(code)<0){err.textContent='❌ Código no válido.';err.classList.remove('hidden');return;}
+  G.judgeCode=code;hide('s-login');show('s-jury');renderJury();
+}
+function logout(){
+  G.judgeCode='';selRole='';
+  ['rc-admin','rc-jury'].forEach(function(id){document.getElementById(id).classList.remove('sel');});
+  document.getElementById('login-admin-fields').classList.add('hidden');
+  document.getElementById('login-jury-fields').classList.add('hidden');
+  document.getElementById('l-err').classList.add('hidden');
+  hide('s-admin');hide('s-jury');show('s-login');
+}
+
+// ─── ADMIN ────────────────────────────────────
+function showAdmin(){
+  hide('s-login');show('s-admin');
+  if(G.started){
+    document.getElementById('a-evname').textContent=G.eventName;
+    document.getElementById('tab-setup').style.opacity='.4';
+    document.getElementById('tab-setup').style.pointerEvents='none';
+    if(G.closed)aTab('res');else{aTab('live');renderLive();}
+  } else {renderSetup();aTab('setup');}
+}
+function aTab(t){
+  ['setup','live','res'].forEach(function(x){
+    document.getElementById('a-'+x).classList.add('hidden');
+    document.getElementById('tab-'+x).classList.remove('on');
+  });
+  show('a-'+t);document.getElementById('tab-'+t).classList.add('on');
+  if(t==='live')renderLive();
+  if(t==='res')renderResults();
+}
+
+// ─── SETUP ────────────────────────────────────
+function renderSetup(){if(G.participations.length===0)addPart();drawParts();}
+function addPart(){
+  G.participations.push({name:'Participación '+(G.participations.length+1),criteria:[],candidates:[{name:''}]});
+  drawParts();
+}
+function drawParts(){
+  var c=document.getElementById('parts-list');c.innerHTML='';
+  G.participations.forEach(function(p,pi){
+    var d=document.createElement('div');d.className='part-block';
+    d.innerHTML='<div class="part-hdr">'
+      +'<input class="inp" value="'+esc(p.name)+'" onchange="G.participations['+pi+'].name=this.value" style="width:auto;flex:1;margin-right:8px;font-weight:700;color:var(--gold-light)"/>'
+      +(G.participations.length>1?'<button class="btn btn-sm btn-red" onclick="delPart('+pi+')">🗑 ELIMINAR</button>':'')
+      +'</div>'
+      +'<label style="margin-bottom:5px">ASPECTOS A CALIFICAR (4–7) — Escribe y presiona Enter</label>'
+      +'<div style="display:flex;gap:8px;margin-bottom:8px">'
+      +'<input class="inp" id="ci-'+pi+'" placeholder="Ej: Elegancia" style="flex:1" onkeydown="critKey(event,'+pi+')"/>'
+      +'<button class="btn btn-purple btn-sm" onclick="addCrit('+pi+')">+</button></div>'
+      +'<div id="crits-'+pi+'" style="margin-bottom:12px">'+renderCrits(pi)+'</div>'
+      +'<label style="margin-bottom:8px">CANDIDATAS</label>'
+      +'<div id="cands-'+pi+'"></div>'
+      +'<button class="btn btn-sm" onclick="addCand('+pi+')" style="margin-top:8px">+ AGREGAR CANDIDATA</button>';
+    c.appendChild(d);drawCands(pi);
+  });
+}
+function renderCrits(pi){
+  return G.participations[pi].criteria.map(function(cr,ci){
+    return '<span class="crit-tag">'+esc(cr)
+      +'<span onclick="delCrit('+pi+','+ci+')" style="cursor:pointer;margin-left:4px;font-weight:700;opacity:.65">×</span></span>';
+  }).join('');
+}
+function critKey(e,pi){if(e.key==='Enter'){e.preventDefault();addCrit(pi);}}
+function addCrit(pi){
+  var inp=document.getElementById('ci-'+pi);var v=inp.value.trim();
+  if(!v)return;
+  if(G.participations[pi].criteria.length>=7){alert('Máximo 7 aspectos.');return;}
+  G.participations[pi].criteria.push(v);inp.value='';
+  var el=document.getElementById('crits-'+pi);if(el)el.innerHTML=renderCrits(pi);
+}
+function delCrit(pi,ci){G.participations[pi].criteria.splice(ci,1);drawParts();}
+function delPart(pi){G.participations.splice(pi,1);drawParts();}
+
+function drawCands(pi){
+  var c=document.getElementById('cands-'+pi);if(!c)return;c.innerHTML='';
+  G.participations[pi].candidates.forEach(function(cand,ci){
+    var pk=photoKey(pi,ci);var hasPhoto=!!PHOTOS[pk];
+    var row=document.createElement('div');row.className='cand-row';
+    row.innerHTML=(hasPhoto
+      ?'<img class="cand-thumb" src="'+PHOTOS[pk]+'" alt="foto"/>'
+      :'<div class="cand-thumb-placeholder" onclick="triggerPhoto('+pi+','+ci+')">📷</div>')
+      +'<div style="flex:1;display:flex;flex-direction:column;gap:6px">'
+      +'<input class="inp" value="'+esc(cand.name)+'" placeholder="Nombre candidata" onchange="G.participations['+pi+'].candidates['+ci+'].name=this.value"/>'
+      +'<div style="display:flex;gap:6px">'
+      +(hasPhoto
+        ?'<button class="upload-btn" onclick="triggerPhoto('+pi+','+ci+')">📷 CAMBIAR</button>'
+         +'<button class="upload-btn" onclick="removePhoto('+pi+','+ci+')" style="color:rgba(230,30,30,.85)">✕ QUITAR</button>'
+        :'<button class="upload-btn" onclick="triggerPhoto('+pi+','+ci+')">📷 AGREGAR FOTO</button>')
+      +'</div></div>'
+      +(G.participations[pi].candidates.length>1
+        ?'<button class="btn btn-sm" onclick="delCand('+pi+','+ci+')" style="color:rgba(230,30,30,.8);align-self:center">✕</button>':'');
+    c.appendChild(row);
+    var fi=document.createElement('input');
+    fi.type='file';fi.accept='image/*';fi.style.display='none';fi.id='fi-'+pi+'-'+ci;
+    fi.addEventListener('change',function(e){
+      var f=e.target.files[0];if(!f)return;
+      resizeAndStore(f,pi,ci);
+    });
+    c.appendChild(fi);
+  });
+}
+function resizeAndStore(file,pi,ci){
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    var img=new Image();
+    img.onload=function(){
+      var mW=800,mH=1000,w=img.width,h=img.height;
+      if(w>mW){h=Math.round(h*mW/w);w=mW;}
+      if(h>mH){w=Math.round(w*mH/h);h=mH;}
+      var cv=document.createElement('canvas');cv.width=w;cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      PHOTOS[photoKey(pi,ci)]=cv.toDataURL('image/jpeg',0.82);
+      sv();drawCands(pi);
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function triggerPhoto(pi,ci){var i=document.getElementById('fi-'+pi+'-'+ci);if(i)i.click();}
+function removePhoto(pi,ci){delete PHOTOS[photoKey(pi,ci)];sv();drawCands(pi);}
+function addCand(pi){G.participations[pi].candidates.push({name:''});drawParts();}
+function delCand(pi,ci){
+  if(G.participations[pi].candidates.length>1){
+    delete PHOTOS[photoKey(pi,ci)];
+    G.participations[pi].candidates.splice(ci,1);drawParts();
+  }
+}
+
+// ─── INICIAR ──────────────────────────────────
+function startEvent(){
+  var name=document.getElementById('ev-name').value.trim();
+  var jraw=document.getElementById('ev-judges').value.trim();
+  var errs=[];
+  if(!name)errs.push('Falta el nombre del certamen.');
+  var judges=jraw?jraw.split('\n').map(function(s){return s.trim().toUpperCase();}).filter(Boolean):[];
+  if(!judges.length)errs.push('Agrega al menos un código de jurado.');
+  G.participations.forEach(function(p,pi){
+    if(!p.name)errs.push('Participación '+(pi+1)+' sin nombre.');
+    if(!p.candidates.filter(function(c){return c.name;}).length)errs.push('Participación '+(pi+1)+' sin candidatas.');
+    if(p.criteria.length<4)errs.push('Participación '+(pi+1)+' requiere mínimo 4 aspectos (tiene '+p.criteria.length+').');
+    if(p.criteria.length>7)errs.push('Participación '+(pi+1)+' tiene más de 7 aspectos.');
+  });
+  var el=document.getElementById('setup-err');
+  if(errs.length){el.textContent=errs.join(' | ');el.classList.remove('hidden');return;}
+  el.classList.add('hidden');
+  G.eventName=name;G.judges=judges;
+  G.participations=G.participations.map(function(p){
+    return{name:p.name,criteria:p.criteria.slice(),
+           candidates:p.candidates.filter(function(c){return c.name;}).map(function(c){return{name:c.name};})};
+  });
+  G.currentPart=0;G.votes={};G.juryProg={};G.closed=false;G.started=true;
+  judges.forEach(function(j){G.juryProg[j]=0;});
+  sv();
+  document.getElementById('a-evname').textContent=G.eventName;
+  document.getElementById('tab-setup').style.opacity='.4';
+  document.getElementById('tab-setup').style.pointerEvents='none';
+  aTab('live');renderLive();
+  alert('✅ Elección iniciada.\n\n👥 CÓDIGOS DE JURADO:\n'+judges.join('\n')+'\n\n🔐 admin / ADMIN304');
+}
+
+// ─── EN VIVO ──────────────────────────────────
+function renderLive(){
+  if(!G.started)return;
+  var p=G.participations[G.currentPart];
+  document.getElementById('live-info').innerHTML='<strong>📍 Participación activa:</strong> '+esc(p.name)+' <em>('+(G.currentPart+1)+' de '+G.participations.length+')</em>';
+  var sg=document.getElementById('jury-status');sg.innerHTML='';
+  G.judges.forEach(function(j){
+    var done=(G.juryProg[j]||0)>G.currentPart;
+    var d=document.createElement('div');
+    d.style.cssText='background:rgba(212,175,55,.08);border-radius:var(--br-md);padding:11px;border:1px solid rgba(212,175,55,.28)';
+    d.innerHTML='<div style="font-size:13px;font-weight:700;color:var(--gold-light)">'+esc(j)+'</div>'
+      +'<div style="font-size:12px;margin-top:5px;font-weight:600;color:'+(done?'rgba(0,200,100,.85)':'rgba(255,165,0,.85)')+'">'+(done?'✔ Completado':'⏳ Pendiente')+'</div>';
+    sg.appendChild(d);
+  });
+  var lp=document.getElementById('live-partial');lp.innerHTML='';
+  var sc=calcScores(G.currentPart);
+  var keys=Object.keys(sc);
+  if(!keys.length){lp.innerHTML='<p style="color:rgba(255,255,255,.45);font-size:13px">⏳ Esperando votos...</p>';return;}
+  var sorted=keys.slice().sort(function(a,b){return sc[b]-sc[a];});
+  var mx=sc[sorted[0]]||1;
+  sorted.forEach(function(cand,i){
+    var pct=Math.round(sc[cand]/mx*100);
+    var row=document.createElement('div');row.style.marginBottom='10px';
+    row.innerHTML='<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">'
+      +'<span style="font-weight:600">'+(i+1)+'. '+esc(cand)+'</span>'
+      +'<span style="font-weight:700;color:var(--gold-light)">'+sc[cand].toFixed(2)+'</span></div>'
+      +'<div class="bar"><div class="bar-f" style="width:'+pct+'%"></div></div>';
+    lp.appendChild(row);
+  });
+}
+
+// ════════════════════════════════════════════
+//  calcScores — promedio real por jurado y candidata
+// ════════════════════════════════════════════
+function calcScores(pi){
+  var p=G.participations[pi];
+  // res[candName] = suma de promedios de aspectos por jurado
+  // cnt[candName] = cuántos jurados votaron
+  var res={};var cnt={};
+  p.candidates.forEach(function(c){res[c.name]=0;cnt[c.name]=0;});
+
+  G.judges.forEach(function(j){
+    var vk=j+'_'+pi;
+    if(!G.votes[vk])return;
+    p.candidates.forEach(function(c){
+      var voteData=G.votes[vk][c.name];
+      if(!voteData)return;
+      var tot=0;var n=0;
+      p.criteria.forEach(function(cr){
+        var v=voteData[cr];
+        if(v&&v>0){tot+=Number(v);n++;}
+      });
+      if(n>0){
+        res[c.name]+=tot/n;   // suma el promedio de aspectos de este jurado
+        cnt[c.name]++;
+      }
+    });
+  });
+
+  // Dividir por cantidad de jurados que votaron → promedio real
+  p.candidates.forEach(function(c){
+    if(cnt[c.name]>0) res[c.name]=res[c.name]/cnt[c.name];
+    else res[c.name]=0;
+  });
+  return res;
+}
+
+function nextPart(){
+  if(G.currentPart<G.participations.length-1){G.currentPart++;sv();renderLive();}
+  else alert('⚠️ Ya estás en la última participación. Usa "Cerrar votación" para finalizar.');
+}
+function closeVoting(){
+  if(!confirm('¿Cerrar la votación y ver resultados finales?'))return;
+  G.closed=true;sv();aTab('res');
+}
+
+// ════════════════════════════════════════════
+//  RESULTADOS — acumula promedio de cada participación
+//  GANADOR = quien tenga mayor suma de promedios
+// ════════════════════════════════════════════
+var COLORS=['#d4af37','rgba(192,192,192,.85)','rgba(255,165,0,.85)','#b833ff','#00e5ff','rgba(255,80,150,.85)','rgba(0,200,100,.85)'];
+
+function renderResults(){
+  if(!G.started)return;
+  var c=document.getElementById('results-content');c.innerHTML='';
+
+  // Paso 1 — Reunir TODOS los nombres únicos de candidatas en todas las participaciones
+  var candNames=[];
+  var seen={};
+  G.participations.forEach(function(p){
+    p.candidates.forEach(function(cn){
+      if(cn.name&&!seen[cn.name]){seen[cn.name]=true;candNames.push(cn.name);}
+    });
+  });
+
+  // Paso 2 — Para cada candidata sumar su promedio en cada participación en que aparezca
+  var allSc={};
+  var allPhotos={};
+  candNames.forEach(function(name){allSc[name]=0;});
+
+  G.participations.forEach(function(p,pi){
+    var sc=calcScores(pi);   // {candName: promedio 0-10}
+    p.candidates.forEach(function(cn,ci){
+      // Solo suma si esta candidata tiene promedio en esta participación
+      if(sc[cn.name]!==undefined){
+        allSc[cn.name]=(allSc[cn.name]||0)+sc[cn.name];
+      }
+      // Guardar foto (primera que encontremos)
+      if(!allPhotos[cn.name]&&PHOTOS[photoKey(pi,ci)]){
+        allPhotos[cn.name]=PHOTOS[photoKey(pi,ci)];
+      }
+    });
+  });
+
+  // Paso 3 — Ordenar por puntaje DESCENDENTE (mayor primero)
+  var sortedAll=candNames.slice().sort(function(a,b){
+    return allSc[b]-allSc[a];
+  });
+
+  // ── Encabezado ──
+  var hdr=document.createElement('div');
+  hdr.style.cssText='text-align:center;margin-bottom:2rem';
+  hdr.innerHTML='<div style="font-size:56px;filter:drop-shadow(0 0 14px rgba(212,175,55,.5))">🏆</div>'
+    +'<h2 style="font-size:28px;margin-top:10px">'+esc(G.eventName)+'</h2>'
+    +'<p style="font-size:13px;color:rgba(212,175,55,.8);margin-top:6px">🏅 RESULTADOS FINALES OFICIALES</p>';
+  c.appendChild(hdr);
+
+  // ── Pódium / Clasificación ──
+  var rankCard=document.createElement('div');rankCard.className='card';
+  rankCard.innerHTML='<h3 style="margin-bottom:14px">🥇 CLASIFICACIÓN GENERAL</h3><div id="rank-body"></div>';
+  c.appendChild(rankCard);
+  var rb=rankCard.querySelector('#rank-body');
+
+  var maxTotal=allSc[sortedAll[0]]||1;
+
+  sortedAll.forEach(function(cand,i){
+    var pc=['p1','p2','p3'][i]||'px';
+    var medal=['🥇','🥈','🥉'][i]||String(i+1);
+    var photo=allPhotos[cand];
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(212,175,55,.18)';
+    row.innerHTML='<div class="pos-badge '+pc+'">'+medal+'</div>'
+      +(photo?'<img class="result-cand-photo" src="'+photo+'" alt="'+esc(cand)+'"/>'
+        :'<div class="result-cand-avatar">👤</div>')
+      +'<div style="flex:1">'
+      +'<div style="font-weight:700;font-size:15px;color:var(--gold-light)">'+esc(cand)+'</div>'
+      +'<div style="margin-top:4px;height:10px;background:rgba(20,20,20,.8);border-radius:5px;overflow:hidden;border:1px solid rgba(212,175,55,.18)">'
+      +'<div style="height:100%;width:'+Math.round(allSc[cand]/maxTotal*100)+'%;background:linear-gradient(90deg,var(--gold),var(--neon-gold));border-radius:5px;transition:width .5s"></div></div>'
+      +'<div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px">Promedio acumulado (suma de participaciones)</div>'
+      +'</div>'
+      +'<div style="font-weight:700;font-size:18px;color:var(--neon-gold);text-shadow:0 0 8px rgba(212,175,55,.5);text-align:right;min-width:55px">'+allSc[cand].toFixed(2)+'</div>';
+    rb.appendChild(row);
+  });
+
+  // ── Gráfica general ──
+  var chartCard=document.createElement('div');chartCard.className='card';
+  chartCard.innerHTML='<h3 style="margin-bottom:14px">📊 GRÁFICA COMPARATIVA GENERAL</h3>'
+    +sortedAll.map(function(cn,i){
+      var pct=Math.round(allSc[cn]/maxTotal*100);
+      return '<div class="cbar-row"><div class="cbar-name">'+esc(cn)+'</div>'
+        +'<div class="cbar-wrap"><div class="cbar-inner" style="width:'+pct+'%;background:'+COLORS[i%COLORS.length]+'">'+allSc[cn].toFixed(2)+'</div></div></div>';
+    }).join('');
+  c.appendChild(chartCard);
+
+  // ── Detalle por participación ──
+  G.participations.forEach(function(p,pi){
+    var sc=calcScores(pi);
+    // Ordenar candidatas de MAYOR a MENOR puntaje en esta participación
+    var sortedC=p.candidates.slice().sort(function(a,b){return (sc[b.name]||0)-(sc[a.name]||0);});
+    var mx2=sc[sortedC[0]?sortedC[0].name:'']||1;
+
+    var pCard=document.createElement('div');pCard.className='card';
+    var jDetail='';
+    G.judges.forEach(function(j){
+      var vk=j+'_'+pi;if(!G.votes[vk])return;
+      p.candidates.forEach(function(cn){
+        var voteData=G.votes[vk][cn.name];if(!voteData)return;
+        var crVals=p.criteria.map(function(cr){
+          return '<td style="padding:6px 8px;font-size:11px;text-align:center;border:1px solid rgba(212,175,55,.18)">'+(voteData[cr]||'—')+'</td>';
+        }).join('');
+        jDetail+='<tr>'
+          +'<td style="padding:6px 8px;font-size:11px;border:1px solid rgba(212,175,55,.18)">'+esc(j)+'</td>'
+          +'<td style="padding:6px 8px;font-size:11px;border:1px solid rgba(212,175,55,.18)">'+esc(cn.name)+'</td>'
+          +crVals+'</tr>';
+      });
+    });
+    var crHdrs=p.criteria.map(function(cr){
+      return '<th style="padding:6px 8px;font-size:11px;font-weight:700;text-align:center;border:1px solid rgba(212,175,55,.18)">'+esc(cr)+'</th>';
+    }).join('');
+
+    pCard.innerHTML='<h3 style="margin-bottom:12px">📋 '+esc(p.name)+'</h3>'
+      +'<div style="margin-bottom:12px">'
+      +sortedC.map(function(cn,i){
+        var pct=Math.round((sc[cn.name]||0)/mx2*100);
+        var cidx=G.participations[pi].candidates.findIndex(function(x){return x.name===cn.name;});
+        var photo=cidx>=0?PHOTOS[photoKey(pi,cidx)]:null;
+        return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+          +(photo?'<img style="width:36px;height:36px;border-radius:50%;object-fit:cover;object-position:center top;flex-shrink:0;border:2px solid rgba(212,175,55,.4)" src="'+photo+'" alt=""/>'
+            :'<div style="width:36px;height:36px;border-radius:50%;background:rgba(212,175,55,.1);flex-shrink:0;display:flex;align-items:center;justify-content:center;border:2px solid rgba(212,175,55,.28)">👤</div>')
+          +'<div style="flex:1">'
+          +'<div style="font-size:13px;margin-bottom:3px;font-weight:600;color:var(--gold-light)">'+(i===0?'🥇 ':'')+(i===1?'🥈 ':'')+(i===2?'🥉 ':'')+esc(cn.name)+'</div>'
+          +'<div class="cbar-wrap"><div class="cbar-inner" style="width:'+pct+'%;background:'+COLORS[i%COLORS.length]+'">'+(sc[cn.name]||0).toFixed(2)+'</div></div>'
+          +'</div></div>';
+      }).join('')
+      +'</div>'
+      +(jDetail?'<details style="margin-top:12px"><summary style="font-size:12px;color:var(--gold-light);cursor:pointer;padding:6px 0;font-weight:700">📋 Ver detalle por jurado ▼</summary>'
+       +'<div style="overflow-x:auto;margin-top:10px"><table style="width:100%;border-collapse:collapse"><thead><tr>'
+       +'<th style="padding:6px 8px;font-size:11px;font-weight:700;text-align:left;border:1px solid rgba(212,175,55,.18)">Jurado</th>'
+       +'<th style="padding:6px 8px;font-size:11px;font-weight:700;text-align:left;border:1px solid rgba(212,175,55,.18)">Candidata</th>'
+       +crHdrs+'</tr></thead><tbody>'+jDetail+'</tbody></table></div></details>':'');
+    c.appendChild(pCard);
+  });
+}
+
+// ─── NUEVA ELECCIÓN ──────────────────────────
+function newElection(){
+  if(!confirm('¿Nueva elección con el mismo formato?\nSe borrarán candidatas, fotos y votos.'))return;
+  var oldParts=G.participations.map(function(p){
+    return{name:p.name,criteria:p.criteria.slice(),candidates:[{name:''}]};
+  });
+  var oldJudges=G.judges.slice();
+  PHOTOS={};
+  G={eventName:'',participations:oldParts,judges:oldJudges,currentPart:0,
+     closed:false,votes:{},juryProg:{},started:false,judgeCode:''};
+  sv();
+  document.getElementById('tab-setup').style.opacity='';
+  document.getElementById('tab-setup').style.pointerEvents='';
+  aTab('setup');
+  document.getElementById('ev-name').value='';
+  document.getElementById('ev-judges').value=oldJudges.join('\n');
+  drawParts();
+}
+function newElectionFresh(){
+  if(!confirm('¿Nueva elección completamente desde cero? Se borrará todo.'))return;
+  PHOTOS={};
+  G={eventName:'',participations:[],judges:[],currentPart:0,
+     closed:false,votes:{},juryProg:{},started:false,judgeCode:''};
+  sv();
+  document.getElementById('tab-setup').style.opacity='';
+  document.getElementById('tab-setup').style.pointerEvents='';
+  document.getElementById('ev-name').value='';
+  document.getElementById('ev-judges').value='';
+  aTab('setup');drawParts();
+}
+
+// ═══════════════════════════════════════════
+//  JURADO — drawJuryPart CORREGIDO
+//  Foto izquierda fija, aspectos derecha adaptativos
+// ═══════════════════════════════════════════
+function renderJury(){
+  document.getElementById('j-evname').textContent=G.eventName||'VOTACIÓN';
+  document.getElementById('j-whoami').textContent='👤 Jurado: '+G.judgeCode;
+  if(G.closed){hide('j-vote');hide('j-wait');show('j-closed');return;}
+  var myProg=G.juryProg[G.judgeCode]||0;
+  if(myProg>G.currentPart){hide('j-vote');show('j-wait');hide('j-closed');return;}
+  hide('j-wait');hide('j-closed');show('j-vote');
+  drawJuryPart(myProg);
+}
+
+function drawJuryPart(pi){
+  var p=G.participations[pi];
+  document.getElementById('j-partbadge').textContent=(pi+1)+'/'+G.participations.length+': '+p.name;
+  var cl=document.getElementById('j-cands');cl.innerHTML='';
+  var vk=G.judgeCode+'_'+pi;
+  var ev=G.votes[vk]||{};
+  var locked=(G.juryProg[G.judgeCode]||0)>pi;
+
+  p.candidates.forEach(function(cand,ci){
+    // ── FOTO: cargar directamente de PHOTOS con la clave exacta ──
+    var photo=PHOTOS[photoKey(pi,ci)];
+
+    // ── CARD principal: flex horizontal ──
+    var cc=document.createElement('div');
+    cc.className='jury-cand-card';
+
+    // ── Columna FOTO ──
+    var photoCol=document.createElement('div');
+    photoCol.className='jury-photo-col';
+    if(photo){
+      var img=document.createElement('img');
+      img.src=photo;
+      img.alt='Foto de '+cand.name;
+      // Fallback por si el src está corrupto
+      img.onerror=function(){
+        photoCol.innerHTML='<div class="jury-photo-placeholder"><span style="font-size:36px;opacity:.35">👤</span><span style="font-size:11px;opacity:.45">Sin foto</span></div>';
+      };
+      photoCol.appendChild(img);
+    } else {
+      photoCol.innerHTML='<div class="jury-photo-placeholder"><span style="font-size:36px;opacity:.35">👤</span><span style="font-size:11px;opacity:.45">Sin foto</span></div>';
+    }
+    cc.appendChild(photoCol);
+
+    // ── Columna BODY ──
+    var body=document.createElement('div');
+    body.className='jury-cand-body';
+    body.innerHTML='<div class="jury-cand-name">'+esc(cand.name)+'</div>';
+
+    // Agregar filas de aspectos dinámicamente
+    p.criteria.forEach(function(cr){
+      var cur=(ev[cand.name]&&ev[cand.name][cr])||0;
+      var row=document.createElement('div');
+      row.className='score-row';
+
+      // Botones 1-10
+      var btnsDiv=document.createElement('div');
+      btnsDiv.className='btns10';
+      for(var i=1;i<=10;i++){
+        var btn=document.createElement('button');
+        btn.className='sb'+(i<=cur?' on':'')+(locked?' lk':'');
+        btn.textContent=i;
+        btn.setAttribute('data-c',sid(cand.name));
+        btn.setAttribute('data-r',sid(cr));
+        btn.setAttribute('data-v',i);
+        if(!locked){
+          (function(val,candName,crName){
+            btn.onclick=function(){setScore(pi,candName,crName,val);};
+          })(i,cand.name,cr);
+        } else {
+          btn.disabled=true;
+        }
+        btnsDiv.appendChild(btn);
+      }
+
+      // Valor actual
+      var valDiv=document.createElement('div');
+      valDiv.className='score-val';
+      valDiv.id='sv-'+pi+'-'+sid(cand.name)+'-'+sid(cr);
+      valDiv.textContent=cur||'—';
+
+      // Label
+      var lblDiv=document.createElement('div');
+      lblDiv.className='score-lbl';
+      lblDiv.textContent=cr;
+
+      row.appendChild(lblDiv);
+      row.appendChild(btnsDiv);
+      row.appendChild(valDiv);
+      body.appendChild(row);
+    });
+
+    cc.appendChild(body);
+    cl.appendChild(cc);
+  });
+
+  if(!locked)checkAllDone(pi);
+}
+
+function setScore(pi,cand,cr,val){
+  var vk=G.judgeCode+'_'+pi;
+  if(!G.votes[vk])G.votes[vk]={};
+  if(!G.votes[vk][cand])G.votes[vk][cand]={};
+  G.votes[vk][cand][cr]=Number(val);sv();
+  // Actualizar botones
+  document.querySelectorAll('[data-c="'+sid(cand)+'"][data-r="'+sid(cr)+'"]').forEach(function(b){
+    b.classList.toggle('on',parseInt(b.getAttribute('data-v'))<=val);
+  });
+  var sv2=document.getElementById('sv-'+pi+'-'+sid(cand)+'-'+sid(cr));
+  if(sv2)sv2.textContent=val;
+  checkAllDone(pi);
+}
+
+function checkAllDone(pi){
+  var vk=G.judgeCode+'_'+pi;
+  var p=G.participations[pi];var ok=true;
+  p.candidates.forEach(function(c){
+    p.criteria.forEach(function(cr){
+      if(!(G.votes[vk]&&G.votes[vk][c.name]&&G.votes[vk][c.name][cr]))ok=false;
+    });
+  });
+  document.getElementById('j-next').classList.toggle('hidden',!ok);
+  document.getElementById('j-nexthint').classList.toggle('hidden',!ok);
+}
+
+function juryNext(){
+  if(!confirm('¿Confirmas que terminaste esta participación?\nNo podrás regresar ni editar tus calificaciones.'))return;
+  var np=(G.juryProg[G.judgeCode]||0)+1;
+  G.juryProg[G.judgeCode]=np;sv();
+  document.getElementById('j-next').classList.add('hidden');
+  document.getElementById('j-nexthint').classList.add('hidden');
+  if(G.closed||np>=G.participations.length){hide('j-vote');show('j-closed');return;}
+  if(np>G.currentPart){
+    hide('j-vote');show('j-wait');
+    var poll=setInterval(function(){
+      ld();
+      if(G.closed){clearInterval(poll);hide('j-wait');show('j-closed');return;}
+      var prog=G.juryProg[G.judgeCode]||0;
+      if(prog<=G.currentPart){
+        clearInterval(poll);hide('j-wait');show('j-vote');drawJuryPart(prog);
+      }
+    },3000);
+    return;
+  }
+  drawJuryPart(np);
+}
+
+// ─── KEY LISTENERS ────────────────────────────
+document.getElementById('l-jcode').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+document.getElementById('l-pass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+</script>
+</body>
+</html>
