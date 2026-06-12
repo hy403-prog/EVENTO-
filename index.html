@@ -4,7 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sistema Elite de Elección de Belleza</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+
+<!-- ════════════════════════════════════════════════════════
+     FIREBASE SDK (versión compat — funciona con <script> simple)
+     ════════════════════════════════════════════════════════ -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
 <style>
 :root{
   --gold:#d4af37;--gold-light:#f4d03f;--black:#0a0a0a;
@@ -40,6 +46,7 @@ body{background:linear-gradient(135deg,#0a0a0a 0%,#1a1a1a 100%);color:var(--whit
 .btn:hover::before{left:100%}
 .btn:hover{border-color:var(--gold);background:rgba(212,175,55,.22);
   box-shadow:0 0 18px rgba(212,175,55,.35);transform:translateY(-2px)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 .btn-purple{background:linear-gradient(135deg,rgba(184,51,255,.18),rgba(212,175,55,.12));
   border-color:var(--neon-purple);color:var(--neon-gold)}
 .btn-purple:hover{box-shadow:0 0 18px var(--neon-purple)}
@@ -63,6 +70,8 @@ label{font-size:12px;color:rgba(212,175,55,.85);margin-bottom:5px;display:block;
 .alert{padding:12px 16px;border-radius:var(--br-md);font-size:13px;margin-bottom:1rem;border-left:4px solid;backdrop-filter:blur(10px)}
 .alert-warn{background:rgba(212,175,55,.12);color:var(--gold-light);border-left-color:var(--gold)}
 .alert-info{background:rgba(0,150,200,.12);color:rgba(100,200,255,.9);border-left-color:rgba(0,150,200,.8)}
+.alert-err{background:rgba(230,30,30,.12);color:rgba(255,150,150,.9);border-left-color:rgba(230,30,30,.8)}
+.alert-ok{background:rgba(0,200,100,.12);color:rgba(150,255,180,.9);border-left-color:rgba(0,200,100,.8)}
 
 .tabs{display:flex;gap:6px;margin-bottom:1.5rem;border-bottom:1px solid rgba(212,175,55,.2);flex-wrap:wrap}
 .tab{padding:10px 18px;border-radius:var(--br-md) var(--br-md) 0 0;cursor:pointer;font-size:13px;
@@ -72,7 +81,6 @@ label{font-size:12px;color:rgba(212,175,55,.85);margin-bottom:5px;display:block;
 .tab.on{background:linear-gradient(135deg,rgba(212,175,55,.22),rgba(212,175,55,.1));color:var(--gold);
   border:1px solid rgba(212,175,55,.45);border-bottom-color:var(--gold);box-shadow:0 4px 12px rgba(212,175,55,.18)}
 
-/* ── SCORE BUTTONS ── */
 .score-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:11px;
   background:linear-gradient(135deg,rgba(212,175,55,.07),rgba(212,175,55,.02));
   border-radius:var(--br-md);border:1px solid rgba(212,175,55,.18)}
@@ -109,9 +117,6 @@ label{font-size:12px;color:rgba(212,175,55,.85);margin-bottom:5px;display:block;
 .p2{background:linear-gradient(135deg,rgba(192,192,192,.85),rgba(220,220,220,.85));color:var(--black)}
 .p3{background:linear-gradient(135deg,rgba(205,127,50,.85),rgba(255,165,0,.65));color:var(--black)}
 .px{background:rgba(212,175,55,.12);color:var(--gold-light)}
-.rr{display:grid;grid-template-columns:42px 1fr 90px;gap:10px;align-items:center;
-  padding:11px 0;border-bottom:1px solid rgba(212,175,55,.18)}
-.rr:last-child{border-bottom:none}
 
 .role-card{border:2px solid rgba(212,175,55,.28);border-radius:var(--br-lg);padding:2rem 1.5rem;
   cursor:pointer;transition:all .3s;text-align:center;background:rgba(22,22,22,.65);backdrop-filter:blur(10px)}
@@ -143,58 +148,23 @@ label{font-size:12px;color:rgba(212,175,55,.85);margin-bottom:5px;display:block;
   color:var(--gold-light);transition:all .3s;font-weight:500;white-space:nowrap}
 .upload-btn:hover{background:rgba(212,175,55,.15);border-color:var(--gold)}
 
-/* ══════════════════════════════════════════════
-   JURY CARD — foto izquierda + aspectos derecha
-   ══════════════════════════════════════════════ */
 .jury-cand-card{
-  background:rgba(18,18,18,.92);
-  border:1.5px solid rgba(212,175,55,.28);
-  border-radius:var(--br-lg);
-  margin-bottom:1.5rem;
-  overflow:hidden;
-  transition:all .3s;
-  display:flex;          /* <— fila horizontal */
-  align-items:stretch;
+  background:rgba(18,18,18,.92);border:1.5px solid rgba(212,175,55,.28);
+  border-radius:var(--br-lg);margin-bottom:1.5rem;overflow:hidden;
+  transition:all .3s;display:flex;align-items:stretch;
 }
 .jury-cand-card:hover{border-color:rgba(212,175,55,.6);box-shadow:0 8px 28px rgba(212,175,55,.18)}
-
-/* Columna FOTO — ancho fijo */
-.jury-photo-col{
-  flex-shrink:0;
-  width:220px;
-  position:relative;
-  background:#111;
-  border-right:2px solid rgba(212,175,55,.28);
-  overflow:hidden;
-}
-.jury-photo-col img{
-  position:absolute;
-  top:0;left:0;
-  width:100%;height:100%;
-  object-fit:cover;
-  object-position:center top;
-  display:block;
-}
-.jury-photo-placeholder{
-  position:absolute;top:0;left:0;width:100%;height:100%;
+.jury-photo-col{flex-shrink:0;width:220px;position:relative;background:#111;
+  border-right:2px solid rgba(212,175,55,.28);overflow:hidden}
+.jury-photo-col img{position:absolute;top:0;left:0;width:100%;height:100%;
+  object-fit:cover;object-position:center top;display:block}
+.jury-photo-placeholder{position:absolute;top:0;left:0;width:100%;height:100%;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   background:linear-gradient(135deg,rgba(212,175,55,.08),rgba(212,175,55,.02));
-  color:rgba(212,175,55,.45);gap:8px;font-size:13px;
-}
-
-/* Columna BODY — crece */
-.jury-cand-body{
-  flex:1;
-  padding:1.2rem 1.3rem;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-}
-.jury-cand-name{
-  font-size:17px;font-weight:700;margin-bottom:12px;
-  color:var(--gold-light);letter-spacing:.5px;
-  border-bottom:1px solid rgba(212,175,55,.2);padding-bottom:8px;
-}
+  color:rgba(212,175,55,.45);gap:8px;font-size:13px}
+.jury-cand-body{flex:1;padding:1.2rem 1.3rem;display:flex;flex-direction:column;overflow:hidden}
+.jury-cand-name{font-size:17px;font-weight:700;margin-bottom:12px;color:var(--gold-light);
+  letter-spacing:.5px;border-bottom:1px solid rgba(212,175,55,.2);padding-bottom:8px}
 
 .result-cand-photo{width:48px;height:48px;border-radius:50%;object-fit:cover;object-position:center top;
   border:2px solid rgba(212,175,55,.5);flex-shrink:0;box-shadow:0 0 10px rgba(212,175,55,.28)}
@@ -203,14 +173,16 @@ label{font-size:12px;color:rgba(212,175,55,.85);margin-bottom:5px;display:block;
   border:2px solid rgba(212,175,55,.45);flex-shrink:0;display:flex;align-items:center;
   justify-content:center;color:var(--gold);font-size:18px}
 
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(212,175,55,.3);
+  border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .card,.role-card,.jury-cand-card{animation:fadeIn .35s ease}
 h2{font-size:26px;font-weight:700;background:linear-gradient(135deg,var(--gold),var(--neon-gold));
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1rem}
 h3{color:var(--gold-light);font-weight:600}
-#s-login{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center}
+#s-login,#s-loading{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center}
 
-/* Responsive */
 @media(max-width:700px){
   .screen{padding:1rem}
   .hdr{flex-direction:column;gap:1rem;align-items:flex-start}
@@ -231,12 +203,23 @@ h3{color:var(--gold-light);font-weight:600}
 <body>
 <div id="app">
 
+<!-- ═══ PANTALLA DE CARGA ═══ -->
+<div id="s-loading" class="screen">
+  <div style="text-align:center">
+    <div style="font-size:64px;margin-bottom:12px">👑</div>
+    <h2 style="font-size:24px">Conectando con la base de datos...</h2>
+    <p style="color:rgba(255,255,255,.5);margin-top:10px"><span class="spinner"></span>Por favor espera</p>
+    <div id="conn-error" class="hidden alert alert-err" style="margin-top:20px;max-width:500px;text-align:left"></div>
+  </div>
+</div>
+
 <!-- ═══ LOGIN ═══ -->
-<div id="s-login" class="screen">
+<div id="s-login" class="screen hidden">
   <div style="text-align:center;margin-bottom:2rem">
     <div style="font-size:64px;margin-bottom:12px;filter:drop-shadow(0 0 15px rgba(212,175,55,.5))">👑</div>
     <h2 style="font-size:32px;margin-bottom:4px">Sistema Elite de Elección</h2>
     <p style="font-size:15px;color:rgba(212,175,55,.8);margin-top:6px">Selecciona tu rol para acceder</p>
+    <p style="font-size:11px;color:rgba(0,200,100,.7);margin-top:6px">🟢 Conectado a la base de datos en la nube</p>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:2rem;max-width:500px;width:100%">
     <div class="role-card" id="rc-admin" onclick="selectRole('admin')">
@@ -259,7 +242,7 @@ h3{color:var(--gold-light);font-weight:600}
     <input class="inp" id="l-jcode" placeholder="Ej: JURADO1" style="margin-top:6px"/>
   </div>
   <div id="l-err" class="alert alert-warn hidden" style="max-width:500px;width:100%"></div>
-  <button class="btn btn-purple btn-full no-print" onclick="doLogin()" style="max-width:500px">INGRESAR AL SISTEMA</button>
+  <button class="btn btn-purple btn-full no-print" id="l-btn" onclick="doLogin()" style="max-width:500px">INGRESAR AL SISTEMA</button>
 </div>
 
 <!-- ═══ ADMIN ═══ -->
@@ -290,7 +273,7 @@ h3{color:var(--gold-light);font-weight:600}
         <div id="parts-list"></div>
       </div>
       <div id="setup-err" class="alert alert-warn hidden"></div>
-      <button class="btn btn-purple btn-full" onclick="startEvent()">▶ INICIAR ELECCIÓN</button>
+      <button class="btn btn-purple btn-full" id="start-btn" onclick="startEvent()">▶ INICIAR ELECCIÓN</button>
     </div>
 
     <div id="a-live" class="hidden">
@@ -304,16 +287,16 @@ h3{color:var(--gold-light);font-weight:600}
         <div id="live-partial"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <button class="btn btn-teal" onclick="nextPart()">➡ SIGUIENTE PARTICIPACIÓN</button>
-        <button class="btn btn-red" onclick="closeVoting()">🔒 CERRAR VOTACIÓN</button>
+        <button class="btn btn-teal" id="next-part-btn" onclick="nextPart()">➡ SIGUIENTE PARTICIPACIÓN</button>
+        <button class="btn btn-red" id="close-vote-btn" onclick="closeVoting()">🔒 CERRAR VOTACIÓN</button>
       </div>
     </div>
 
     <div id="a-res" class="hidden">
       <div style="display:flex;gap:10px;margin-bottom:1.5rem;flex-wrap:wrap" class="no-print">
         <button class="btn btn-purple" onclick="window.print()">🖨 IMPRIMIR</button>
-        <button class="btn btn-amber" onclick="newElection()">🔄 NUEVA (MISMO FORMATO)</button>
-        <button class="btn btn-teal" onclick="newElectionFresh()">+ NUEVA DESDE CERO</button>
+        <button class="btn btn-amber" id="newel-btn" onclick="newElection()">🔄 NUEVA (MISMO FORMATO)</button>
+        <button class="btn btn-teal" id="newelf-btn" onclick="newElectionFresh()">+ NUEVA DESDE CERO</button>
       </div>
       <div id="results-content"></div>
     </div>
@@ -335,7 +318,7 @@ h3{color:var(--gold-light);font-weight:600}
     <div id="j-wait" class="hidden" style="text-align:center;padding:3rem 1rem">
       <div style="font-size:48px;margin-bottom:12px">⏳</div>
       <h2 style="font-size:20px">PARTICIPACIÓN ENVIADA</h2>
-      <p style="font-size:14px;color:rgba(255,255,255,.55);margin-top:10px">Espera que el administrador habilite la siguiente participación.</p>
+      <p style="font-size:14px;color:rgba(255,255,255,.55);margin-top:10px">Espera que el administrador habilite la siguiente participación. Esta pantalla se actualizará sola.</p>
     </div>
     <div id="j-vote">
       <div class="alert alert-info" style="margin-bottom:1.5rem">📷 Observa la foto de cada candidata y califica del <strong>1 al 10</strong> cada aspecto.</div>
@@ -349,57 +332,149 @@ h3{color:var(--gold-light);font-weight:600}
 </div>
 
 </div><!-- /app -->
+
 <script>
-// ════════════════════════════════════════════
-//  ESTADO GLOBAL
-// ════════════════════════════════════════════
-var G={eventName:'',participations:[],judges:[],currentPart:0,
-       closed:false,votes:{},juryProg:{},started:false,judgeCode:''};
-var PHOTOS={};
+// ═══════════════════════════════════════════════════════════
+//  ███████  CONFIGURACIÓN DE FIREBASE  ███████
+//  PEGA AQUÍ TUS CREDENCIALES DE FIREBASE (firebaseConfig)
+//  Las obtienes en: Firebase Console → Configuración del
+//  proyecto → Tus apps → Config del SDK
+// ═══════════════════════════════════════════════════════════
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
-// ─── PERSISTENCIA ────────────────────────────
-function sv(){
-  try{
-    var slim=JSON.parse(JSON.stringify(G));
-    slim.participations=slim.participations.map(function(p){
-      return{name:p.name,criteria:p.criteria,
-             candidates:p.candidates.map(function(c){return{name:c.name};})};
-    });
-    localStorage.setItem('bq_v5',JSON.stringify(slim));
-  }catch(e){}
-  // Fotos: intentar localStorage, si falla usar sessionStorage
-  try{localStorage.setItem('bq_v5_ph',JSON.stringify(PHOTOS));}
-  catch(e){try{sessionStorage.setItem('bq_v5_ph',JSON.stringify(PHOTOS));}catch(e2){}}
-}
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDh87PqbBZ9n7emC2IcZIvxiZ3qmqX4L_4",
+  authDomain: "eleccion-belleza.firebaseapp.com",
+  projectId: "eleccion-belleza",
+  storageBucket: "eleccion-belleza.firebasestorage.app",
+  messagingSenderId: "406564841278",
+  appId: "1:406564841278:web:2534f78a0f4280f4a5ee6f"
+};
 
-function ld(){
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+// ═══════════════════════════════════════════════════════════
+
+let db=null;
+let firebaseReady=false;
+
+function initFirebase(){
   try{
-    var s=localStorage.getItem('bq_v5');
-    if(s){
-      G=JSON.parse(s);
-      G.participations=(G.participations||[]).map(function(p){
-        return{name:p.name||'',criteria:p.criteria||[],
-               candidates:(p.candidates||[]).map(function(c){
-                 return typeof c==='string'?{name:c}:{name:c.name||''};
-               })};
-      });
-      G.votes=G.votes||{};G.juryProg=G.juryProg||{};
+    if(firebaseConfig.apiKey==="PEGA_AQUI_TU_API_KEY"){
+      showConnError('⚠️ Aún no has configurado Firebase.\n\nAbre este archivo HTML con un editor de texto, busca la sección "CONFIGURACIÓN DE FIREBASE" cerca del final del archivo, y pega ahí las credenciales de tu proyecto Firebase (firebaseConfig).\n\nConsulta la guía que te dieron para crear el proyecto gratuito en https://console.firebase.google.com');
+      return;
     }
-  }catch(e){}
-  PHOTOS={};
-  try{var p=localStorage.getItem('bq_v5_ph');if(p)PHOTOS=JSON.parse(p)||{};}catch(e){}
-  if(!Object.keys(PHOTOS).length){
-    try{var p2=sessionStorage.getItem('bq_v5_ph');if(p2)PHOTOS=JSON.parse(p2)||{};}catch(e){}
+    firebase.initializeApp(firebaseConfig);
+    db=firebase.firestore();
+    firebaseReady=true;
+    startApp();
+  }catch(e){
+    showConnError('❌ Error al conectar con Firebase: '+e.message+'\n\nVerifica que copiaste correctamente todas las credenciales de firebaseConfig.');
   }
 }
-ld();
+
+function showConnError(msg){
+  document.getElementById('conn-error').textContent=msg;
+  document.getElementById('conn-error').classList.remove('hidden');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ESTRUCTURA EN FIRESTORE
+//  evento/config         → {eventName, participations(sin fotos), judges, currentPart, closed, started}
+//  evento/fotos          → {photos: {p0_c0: "data:...", ...}}
+//  votos/{juez}_{pIdx}    → {candName: {criterio: valor, ...}, ...}
+//  progreso/{juez}        → {prog: number}
+// ═══════════════════════════════════════════════════════════
+
+var G={eventName:'',participations:[],judges:[],currentPart:0,
+       closed:false,started:false,judgeCode:''};
+var PHOTOS={};
+var VOTES={};      // {juez_pIdx: {...}}
+var JURYPROG={};   // {juez: number}
+
+var unsubConfig=null, unsubPhotos=null, unsubVotes=null, unsubProg=null;
 
 // ─── UTILIDADES ──────────────────────────────
-function photoKey(pi,ci){return 'p'+pi+'_c'+ci;}
 function show(id){document.getElementById(id).classList.remove('hidden');}
 function hide(id){document.getElementById(id).classList.add('hidden');}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function sid(s){return String(s).replace(/[^a-zA-Z0-9]/g,'_');}
+function photoKey(pi,ci){return 'p'+pi+'_c'+ci;}
+
+// ═══════════════════════════════════════════════════════════
+//  INICIO DE LA APP — escucha cambios en tiempo real
+// ═══════════════════════════════════════════════════════════
+function startApp(){
+  // Escuchar configuración del evento
+  unsubConfig=db.collection('evento').doc('config').onSnapshot(function(doc){
+    if(doc.exists){
+      var d=doc.data();
+      G.eventName=d.eventName||'';
+      G.participations=(d.participations||[]).map(function(p){
+        return{name:p.name||'',criteria:p.criteria||[],
+               candidates:(p.candidates||[]).map(function(c){return{name:c.name||''};})};
+      });
+      G.judges=d.judges||[];
+      G.currentPart=d.currentPart||0;
+      G.closed=!!d.closed;
+      G.started=!!d.started;
+    } else {
+      G.eventName='';G.participations=[];G.judges=[];G.currentPart=0;G.closed=false;G.started=false;
+    }
+    onStateChange();
+  },function(err){
+    showConnError('❌ Error leyendo configuración: '+err.message);
+  });
+
+  // Escuchar fotos
+  unsubPhotos=db.collection('evento').doc('fotos').onSnapshot(function(doc){
+    PHOTOS=doc.exists?(doc.data().photos||{}):{};
+    onStateChange();
+  });
+
+  // Escuchar votos (toda la colección)
+  unsubVotes=db.collection('votos').onSnapshot(function(snap){
+    VOTES={};
+    snap.forEach(function(doc){VOTES[doc.id]=doc.data();});
+    onStateChange();
+  });
+
+  // Escuchar progreso de jurados
+  unsubProg=db.collection('progreso').onSnapshot(function(snap){
+    JURYPROG={};
+    snap.forEach(function(doc){JURYPROG[doc.id]=doc.data().prog||0;});
+    onStateChange();
+  });
+
+  hide('s-loading');show('s-login');
+}
+
+var firstLoad=true;
+function onStateChange(){
+  if(firstLoad){firstLoad=false;return;} // Esperar a tener datos antes de re-render
+  // Re-renderizar la vista activa según dónde esté el usuario
+  if(!document.getElementById('s-admin').classList.contains('hidden')){
+    refreshAdminView();
+  }
+  if(!document.getElementById('s-jury').classList.contains('hidden')){
+    renderJury();
+  }
+}
+
+function refreshAdminView(){
+  if(G.started){
+    document.getElementById('a-evname').textContent=G.eventName;
+    if(G.closed){
+      if(document.getElementById('tab-res').classList.contains('on'))renderResults();
+    } else {
+      if(document.getElementById('tab-live').classList.contains('on'))renderLive();
+    }
+  }
+}
 
 // ─── LOGIN ────────────────────────────────────
 var selRole='';
@@ -420,8 +495,8 @@ function doLogin(){
     err.textContent='❌ Usuario o contraseña incorrectos.';err.classList.remove('hidden');return;
   }
   var code=document.getElementById('l-jcode').value.trim().toUpperCase();
-  if(!G.started){err.textContent='⚠️ El evento aún no ha sido iniciado.';err.classList.remove('hidden');return;}
-  if(G.judges.indexOf(code)<0){err.textContent='❌ Código no válido.';err.classList.remove('hidden');return;}
+  if(!G.started){err.textContent='⚠️ El evento aún no ha sido iniciado por el administrador.';err.classList.remove('hidden');return;}
+  if(G.judges.indexOf(code)<0){err.textContent='❌ Código de jurado no válido.';err.classList.remove('hidden');return;}
   G.judgeCode=code;hide('s-login');show('s-jury');renderJury();
 }
 function logout(){
@@ -453,19 +528,29 @@ function aTab(t){
   if(t==='res')renderResults();
 }
 
-// ─── SETUP ────────────────────────────────────
-function renderSetup(){if(G.participations.length===0)addPart();drawParts();}
+// ─── SETUP (estado local hasta presionar "Iniciar") ──
+var LOCAL_PARTS=[]; // edición local antes de guardar en Firestore
+var LOCAL_PHOTOS={};
+
+function renderSetup(){
+  LOCAL_PARTS=G.participations.length?JSON.parse(JSON.stringify(G.participations)):[];
+  LOCAL_PHOTOS=JSON.parse(JSON.stringify(PHOTOS||{}));
+  if(LOCAL_PARTS.length===0)addPart();
+  document.getElementById('ev-name').value=G.eventName||'';
+  document.getElementById('ev-judges').value=(G.judges||[]).join('\n');
+  drawParts();
+}
 function addPart(){
-  G.participations.push({name:'Participación '+(G.participations.length+1),criteria:[],candidates:[{name:''}]});
+  LOCAL_PARTS.push({name:'Participación '+(LOCAL_PARTS.length+1),criteria:[],candidates:[{name:''}]});
   drawParts();
 }
 function drawParts(){
   var c=document.getElementById('parts-list');c.innerHTML='';
-  G.participations.forEach(function(p,pi){
+  LOCAL_PARTS.forEach(function(p,pi){
     var d=document.createElement('div');d.className='part-block';
     d.innerHTML='<div class="part-hdr">'
-      +'<input class="inp" value="'+esc(p.name)+'" onchange="G.participations['+pi+'].name=this.value" style="width:auto;flex:1;margin-right:8px;font-weight:700;color:var(--gold-light)"/>'
-      +(G.participations.length>1?'<button class="btn btn-sm btn-red" onclick="delPart('+pi+')">🗑 ELIMINAR</button>':'')
+      +'<input class="inp" value="'+esc(p.name)+'" onchange="LOCAL_PARTS['+pi+'].name=this.value" style="width:auto;flex:1;margin-right:8px;font-weight:700;color:var(--gold-light)"/>'
+      +(LOCAL_PARTS.length>1?'<button class="btn btn-sm btn-red" onclick="delPart('+pi+')">🗑 ELIMINAR</button>':'')
       +'</div>'
       +'<label style="margin-bottom:5px">ASPECTOS A CALIFICAR (4–7) — Escribe y presiona Enter</label>'
       +'<div style="display:flex;gap:8px;margin-bottom:8px">'
@@ -479,7 +564,7 @@ function drawParts(){
   });
 }
 function renderCrits(pi){
-  return G.participations[pi].criteria.map(function(cr,ci){
+  return LOCAL_PARTS[pi].criteria.map(function(cr,ci){
     return '<span class="crit-tag">'+esc(cr)
       +'<span onclick="delCrit('+pi+','+ci+')" style="cursor:pointer;margin-left:4px;font-weight:700;opacity:.65">×</span></span>';
   }).join('');
@@ -488,30 +573,30 @@ function critKey(e,pi){if(e.key==='Enter'){e.preventDefault();addCrit(pi);}}
 function addCrit(pi){
   var inp=document.getElementById('ci-'+pi);var v=inp.value.trim();
   if(!v)return;
-  if(G.participations[pi].criteria.length>=7){alert('Máximo 7 aspectos.');return;}
-  G.participations[pi].criteria.push(v);inp.value='';
+  if(LOCAL_PARTS[pi].criteria.length>=7){alert('Máximo 7 aspectos.');return;}
+  LOCAL_PARTS[pi].criteria.push(v);inp.value='';
   var el=document.getElementById('crits-'+pi);if(el)el.innerHTML=renderCrits(pi);
 }
-function delCrit(pi,ci){G.participations[pi].criteria.splice(ci,1);drawParts();}
-function delPart(pi){G.participations.splice(pi,1);drawParts();}
+function delCrit(pi,ci){LOCAL_PARTS[pi].criteria.splice(ci,1);drawParts();}
+function delPart(pi){LOCAL_PARTS.splice(pi,1);drawParts();}
 
 function drawCands(pi){
   var c=document.getElementById('cands-'+pi);if(!c)return;c.innerHTML='';
-  G.participations[pi].candidates.forEach(function(cand,ci){
-    var pk=photoKey(pi,ci);var hasPhoto=!!PHOTOS[pk];
+  LOCAL_PARTS[pi].candidates.forEach(function(cand,ci){
+    var pk=photoKey(pi,ci);var hasPhoto=!!LOCAL_PHOTOS[pk];
     var row=document.createElement('div');row.className='cand-row';
     row.innerHTML=(hasPhoto
-      ?'<img class="cand-thumb" src="'+PHOTOS[pk]+'" alt="foto"/>'
+      ?'<img class="cand-thumb" src="'+LOCAL_PHOTOS[pk]+'" alt="foto"/>'
       :'<div class="cand-thumb-placeholder" onclick="triggerPhoto('+pi+','+ci+')">📷</div>')
       +'<div style="flex:1;display:flex;flex-direction:column;gap:6px">'
-      +'<input class="inp" value="'+esc(cand.name)+'" placeholder="Nombre candidata" onchange="G.participations['+pi+'].candidates['+ci+'].name=this.value"/>'
+      +'<input class="inp" value="'+esc(cand.name)+'" placeholder="Nombre candidata" onchange="LOCAL_PARTS['+pi+'].candidates['+ci+'].name=this.value"/>'
       +'<div style="display:flex;gap:6px">'
       +(hasPhoto
         ?'<button class="upload-btn" onclick="triggerPhoto('+pi+','+ci+')">📷 CAMBIAR</button>'
          +'<button class="upload-btn" onclick="removePhoto('+pi+','+ci+')" style="color:rgba(230,30,30,.85)">✕ QUITAR</button>'
         :'<button class="upload-btn" onclick="triggerPhoto('+pi+','+ci+')">📷 AGREGAR FOTO</button>')
       +'</div></div>'
-      +(G.participations[pi].candidates.length>1
+      +(LOCAL_PARTS[pi].candidates.length>1
         ?'<button class="btn btn-sm" onclick="delCand('+pi+','+ci+')" style="color:rgba(230,30,30,.8);align-self:center">✕</button>':'');
     c.appendChild(row);
     var fi=document.createElement('input');
@@ -528,37 +613,37 @@ function resizeAndStore(file,pi,ci){
   reader.onload=function(ev){
     var img=new Image();
     img.onload=function(){
-      var mW=800,mH=1000,w=img.width,h=img.height;
+      var mW=500,mH=650,w=img.width,h=img.height; // tamaño moderado: Firestore límite 1MB/doc
       if(w>mW){h=Math.round(h*mW/w);w=mW;}
       if(h>mH){w=Math.round(w*mH/h);h=mH;}
       var cv=document.createElement('canvas');cv.width=w;cv.height=h;
       cv.getContext('2d').drawImage(img,0,0,w,h);
-      PHOTOS[photoKey(pi,ci)]=cv.toDataURL('image/jpeg',0.82);
-      sv();drawCands(pi);
+      LOCAL_PHOTOS[photoKey(pi,ci)]=cv.toDataURL('image/jpeg',0.7);
+      drawCands(pi);
     };
     img.src=ev.target.result;
   };
   reader.readAsDataURL(file);
 }
 function triggerPhoto(pi,ci){var i=document.getElementById('fi-'+pi+'-'+ci);if(i)i.click();}
-function removePhoto(pi,ci){delete PHOTOS[photoKey(pi,ci)];sv();drawCands(pi);}
-function addCand(pi){G.participations[pi].candidates.push({name:''});drawParts();}
+function removePhoto(pi,ci){delete LOCAL_PHOTOS[photoKey(pi,ci)];drawCands(pi);}
+function addCand(pi){LOCAL_PARTS[pi].candidates.push({name:''});drawParts();}
 function delCand(pi,ci){
-  if(G.participations[pi].candidates.length>1){
-    delete PHOTOS[photoKey(pi,ci)];
-    G.participations[pi].candidates.splice(ci,1);drawParts();
+  if(LOCAL_PARTS[pi].candidates.length>1){
+    delete LOCAL_PHOTOS[photoKey(pi,ci)];
+    LOCAL_PARTS[pi].candidates.splice(ci,1);drawParts();
   }
 }
 
-// ─── INICIAR ──────────────────────────────────
-function startEvent(){
+// ─── INICIAR EVENTO → guarda todo en Firestore ──
+async function startEvent(){
   var name=document.getElementById('ev-name').value.trim();
   var jraw=document.getElementById('ev-judges').value.trim();
   var errs=[];
   if(!name)errs.push('Falta el nombre del certamen.');
   var judges=jraw?jraw.split('\n').map(function(s){return s.trim().toUpperCase();}).filter(Boolean):[];
   if(!judges.length)errs.push('Agrega al menos un código de jurado.');
-  G.participations.forEach(function(p,pi){
+  LOCAL_PARTS.forEach(function(p,pi){
     if(!p.name)errs.push('Participación '+(pi+1)+' sin nombre.');
     if(!p.candidates.filter(function(c){return c.name;}).length)errs.push('Participación '+(pi+1)+' sin candidatas.');
     if(p.criteria.length<4)errs.push('Participación '+(pi+1)+' requiere mínimo 4 aspectos (tiene '+p.criteria.length+').');
@@ -567,29 +652,58 @@ function startEvent(){
   var el=document.getElementById('setup-err');
   if(errs.length){el.textContent=errs.join(' | ');el.classList.remove('hidden');return;}
   el.classList.add('hidden');
-  G.eventName=name;G.judges=judges;
-  G.participations=G.participations.map(function(p){
+
+  var participations=LOCAL_PARTS.map(function(p){
     return{name:p.name,criteria:p.criteria.slice(),
            candidates:p.candidates.filter(function(c){return c.name;}).map(function(c){return{name:c.name};})};
   });
-  G.currentPart=0;G.votes={};G.juryProg={};G.closed=false;G.started=true;
-  judges.forEach(function(j){G.juryProg[j]=0;});
-  sv();
-  document.getElementById('a-evname').textContent=G.eventName;
-  document.getElementById('tab-setup').style.opacity='.4';
-  document.getElementById('tab-setup').style.pointerEvents='none';
-  aTab('live');renderLive();
-  alert('✅ Elección iniciada.\n\n👥 CÓDIGOS DE JURADO:\n'+judges.join('\n')+'\n\n🔐 admin / ADMIN304');
+
+  var btn=document.getElementById('start-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> GUARDANDO...';
+
+  try{
+    // Limpiar votos y progreso anteriores
+    await clearCollection('votos');
+    await clearCollection('progreso');
+
+    // Guardar config
+    await db.collection('evento').doc('config').set({
+      eventName:name,participations:participations,judges:judges,
+      currentPart:0,closed:false,started:true
+    });
+    // Guardar fotos
+    await db.collection('evento').doc('fotos').set({photos:LOCAL_PHOTOS});
+    // Inicializar progreso de cada jurado
+    for(var j of judges){
+      await db.collection('progreso').doc(j).set({prog:0});
+    }
+
+    document.getElementById('tab-setup').style.opacity='.4';
+    document.getElementById('tab-setup').style.pointerEvents='none';
+    aTab('live');
+    alert('✅ Elección iniciada.\n\n👥 CÓDIGOS DE JURADO:\n'+judges.join('\n')+'\n\n🔐 admin / ADMIN304');
+  }catch(e){
+    alert('❌ Error al guardar: '+e.message);
+  }
+  btn.disabled=false;btn.innerHTML='▶ INICIAR ELECCIÓN';
+}
+
+async function clearCollection(name){
+  var snap=await db.collection(name).get();
+  var batch=db.batch();
+  snap.forEach(function(doc){batch.delete(doc.ref);});
+  if(!snap.empty)await batch.commit();
 }
 
 // ─── EN VIVO ──────────────────────────────────
 function renderLive(){
   if(!G.started)return;
   var p=G.participations[G.currentPart];
+  if(!p)return;
   document.getElementById('live-info').innerHTML='<strong>📍 Participación activa:</strong> '+esc(p.name)+' <em>('+(G.currentPart+1)+' de '+G.participations.length+')</em>';
   var sg=document.getElementById('jury-status');sg.innerHTML='';
   G.judges.forEach(function(j){
-    var done=(G.juryProg[j]||0)>G.currentPart;
+    var done=(JURYPROG[j]||0)>G.currentPart;
     var d=document.createElement('div');
     d.style.cssText='background:rgba(212,175,55,.08);border-radius:var(--br-md);padding:11px;border:1px solid rgba(212,175,55,.28)';
     d.innerHTML='<div style="font-size:13px;font-weight:700;color:var(--gold-light)">'+esc(j)+'</div>'
@@ -618,49 +732,50 @@ function renderLive(){
 // ════════════════════════════════════════════
 function calcScores(pi){
   var p=G.participations[pi];
-  // res[candName] = suma de promedios de aspectos por jurado
-  // cnt[candName] = cuántos jurados votaron
   var res={};var cnt={};
   p.candidates.forEach(function(c){res[c.name]=0;cnt[c.name]=0;});
 
   G.judges.forEach(function(j){
     var vk=j+'_'+pi;
-    if(!G.votes[vk])return;
+    var voteDoc=VOTES[vk];
+    if(!voteDoc)return;
     p.candidates.forEach(function(c){
-      var voteData=G.votes[vk][c.name];
+      var voteData=voteDoc[c.name];
       if(!voteData)return;
       var tot=0;var n=0;
       p.criteria.forEach(function(cr){
         var v=voteData[cr];
         if(v&&v>0){tot+=Number(v);n++;}
       });
-      if(n>0){
-        res[c.name]+=tot/n;   // suma el promedio de aspectos de este jurado
-        cnt[c.name]++;
-      }
+      if(n>0){res[c.name]+=tot/n;cnt[c.name]++;}
     });
   });
-
-  // Dividir por cantidad de jurados que votaron → promedio real
   p.candidates.forEach(function(c){
-    if(cnt[c.name]>0) res[c.name]=res[c.name]/cnt[c.name];
+    if(cnt[c.name]>0)res[c.name]=res[c.name]/cnt[c.name];
     else res[c.name]=0;
   });
   return res;
 }
 
-function nextPart(){
-  if(G.currentPart<G.participations.length-1){G.currentPart++;sv();renderLive();}
-  else alert('⚠️ Ya estás en la última participación. Usa "Cerrar votación" para finalizar.');
+async function nextPart(){
+  if(G.currentPart<G.participations.length-1){
+    var btn=document.getElementById('next-part-btn');
+    btn.disabled=true;
+    await db.collection('evento').doc('config').update({currentPart:G.currentPart+1});
+    btn.disabled=false;
+  } else alert('⚠️ Ya estás en la última participación. Usa "Cerrar votación" para finalizar.');
 }
-function closeVoting(){
-  if(!confirm('¿Cerrar la votación y ver resultados finales?'))return;
-  G.closed=true;sv();aTab('res');
+async function closeVoting(){
+  if(!confirm('¿Cerrar la votación para todos y ver los resultados finales?'))return;
+  var btn=document.getElementById('close-vote-btn');
+  btn.disabled=true;
+  await db.collection('evento').doc('config').update({closed:true});
+  btn.disabled=false;
+  aTab('res');
 }
 
 // ════════════════════════════════════════════
-//  RESULTADOS — acumula promedio de cada participación
-//  GANADOR = quien tenga mayor suma de promedios
+//  RESULTADOS — suma promedios por participación
 // ════════════════════════════════════════════
 var COLORS=['#d4af37','rgba(192,192,192,.85)','rgba(255,165,0,.85)','#b833ff','#00e5ff','rgba(255,80,150,.85)','rgba(0,200,100,.85)'];
 
@@ -668,40 +783,26 @@ function renderResults(){
   if(!G.started)return;
   var c=document.getElementById('results-content');c.innerHTML='';
 
-  // Paso 1 — Reunir TODOS los nombres únicos de candidatas en todas las participaciones
-  var candNames=[];
-  var seen={};
+  var candNames=[];var seen={};
   G.participations.forEach(function(p){
     p.candidates.forEach(function(cn){
       if(cn.name&&!seen[cn.name]){seen[cn.name]=true;candNames.push(cn.name);}
     });
   });
 
-  // Paso 2 — Para cada candidata sumar su promedio en cada participación en que aparezca
-  var allSc={};
-  var allPhotos={};
+  var allSc={};var allPhotos={};
   candNames.forEach(function(name){allSc[name]=0;});
 
   G.participations.forEach(function(p,pi){
-    var sc=calcScores(pi);   // {candName: promedio 0-10}
+    var sc=calcScores(pi);
     p.candidates.forEach(function(cn,ci){
-      // Solo suma si esta candidata tiene promedio en esta participación
-      if(sc[cn.name]!==undefined){
-        allSc[cn.name]=(allSc[cn.name]||0)+sc[cn.name];
-      }
-      // Guardar foto (primera que encontremos)
-      if(!allPhotos[cn.name]&&PHOTOS[photoKey(pi,ci)]){
-        allPhotos[cn.name]=PHOTOS[photoKey(pi,ci)];
-      }
+      if(sc[cn.name]!==undefined)allSc[cn.name]=(allSc[cn.name]||0)+sc[cn.name];
+      if(!allPhotos[cn.name]&&PHOTOS[photoKey(pi,ci)])allPhotos[cn.name]=PHOTOS[photoKey(pi,ci)];
     });
   });
 
-  // Paso 3 — Ordenar por puntaje DESCENDENTE (mayor primero)
-  var sortedAll=candNames.slice().sort(function(a,b){
-    return allSc[b]-allSc[a];
-  });
+  var sortedAll=candNames.slice().sort(function(a,b){return allSc[b]-allSc[a];});
 
-  // ── Encabezado ──
   var hdr=document.createElement('div');
   hdr.style.cssText='text-align:center;margin-bottom:2rem';
   hdr.innerHTML='<div style="font-size:56px;filter:drop-shadow(0 0 14px rgba(212,175,55,.5))">🏆</div>'
@@ -709,12 +810,10 @@ function renderResults(){
     +'<p style="font-size:13px;color:rgba(212,175,55,.8);margin-top:6px">🏅 RESULTADOS FINALES OFICIALES</p>';
   c.appendChild(hdr);
 
-  // ── Pódium / Clasificación ──
   var rankCard=document.createElement('div');rankCard.className='card';
   rankCard.innerHTML='<h3 style="margin-bottom:14px">🥇 CLASIFICACIÓN GENERAL</h3><div id="rank-body"></div>';
   c.appendChild(rankCard);
   var rb=rankCard.querySelector('#rank-body');
-
   var maxTotal=allSc[sortedAll[0]]||1;
 
   sortedAll.forEach(function(cand,i){
@@ -729,14 +828,13 @@ function renderResults(){
       +'<div style="flex:1">'
       +'<div style="font-weight:700;font-size:15px;color:var(--gold-light)">'+esc(cand)+'</div>'
       +'<div style="margin-top:4px;height:10px;background:rgba(20,20,20,.8);border-radius:5px;overflow:hidden;border:1px solid rgba(212,175,55,.18)">'
-      +'<div style="height:100%;width:'+Math.round(allSc[cand]/maxTotal*100)+'%;background:linear-gradient(90deg,var(--gold),var(--neon-gold));border-radius:5px;transition:width .5s"></div></div>'
+      +'<div style="height:100%;width:'+Math.round(allSc[cand]/maxTotal*100)+'%;background:linear-gradient(90deg,var(--gold),var(--neon-gold));border-radius:5px"></div></div>'
       +'<div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px">Promedio acumulado (suma de participaciones)</div>'
       +'</div>'
       +'<div style="font-weight:700;font-size:18px;color:var(--neon-gold);text-shadow:0 0 8px rgba(212,175,55,.5);text-align:right;min-width:55px">'+allSc[cand].toFixed(2)+'</div>';
     rb.appendChild(row);
   });
 
-  // ── Gráfica general ──
   var chartCard=document.createElement('div');chartCard.className='card';
   chartCard.innerHTML='<h3 style="margin-bottom:14px">📊 GRÁFICA COMPARATIVA GENERAL</h3>'
     +sortedAll.map(function(cn,i){
@@ -746,19 +844,16 @@ function renderResults(){
     }).join('');
   c.appendChild(chartCard);
 
-  // ── Detalle por participación ──
   G.participations.forEach(function(p,pi){
     var sc=calcScores(pi);
-    // Ordenar candidatas de MAYOR a MENOR puntaje en esta participación
     var sortedC=p.candidates.slice().sort(function(a,b){return (sc[b.name]||0)-(sc[a.name]||0);});
     var mx2=sc[sortedC[0]?sortedC[0].name:'']||1;
-
     var pCard=document.createElement('div');pCard.className='card';
     var jDetail='';
     G.judges.forEach(function(j){
-      var vk=j+'_'+pi;if(!G.votes[vk])return;
+      var vk=j+'_'+pi;var voteDoc=VOTES[vk];if(!voteDoc)return;
       p.candidates.forEach(function(cn){
-        var voteData=G.votes[vk][cn.name];if(!voteData)return;
+        var voteData=voteDoc[cn.name];if(!voteData)return;
         var crVals=p.criteria.map(function(cr){
           return '<td style="padding:6px 8px;font-size:11px;text-align:center;border:1px solid rgba(212,175,55,.18)">'+(voteData[cr]||'—')+'</td>';
         }).join('');
@@ -797,74 +892,76 @@ function renderResults(){
 }
 
 // ─── NUEVA ELECCIÓN ──────────────────────────
-function newElection(){
+async function newElection(){
   if(!confirm('¿Nueva elección con el mismo formato?\nSe borrarán candidatas, fotos y votos.'))return;
+  var btn=document.getElementById('newel-btn');btn.disabled=true;
   var oldParts=G.participations.map(function(p){
     return{name:p.name,criteria:p.criteria.slice(),candidates:[{name:''}]};
   });
   var oldJudges=G.judges.slice();
-  PHOTOS={};
-  G={eventName:'',participations:oldParts,judges:oldJudges,currentPart:0,
-     closed:false,votes:{},juryProg:{},started:false,judgeCode:''};
-  sv();
-  document.getElementById('tab-setup').style.opacity='';
-  document.getElementById('tab-setup').style.pointerEvents='';
-  aTab('setup');
-  document.getElementById('ev-name').value='';
-  document.getElementById('ev-judges').value=oldJudges.join('\n');
-  drawParts();
+  try{
+    await clearCollection('votos');
+    await clearCollection('progreso');
+    await db.collection('evento').doc('config').set({
+      eventName:'',participations:oldParts,judges:oldJudges,currentPart:0,closed:false,started:false
+    });
+    await db.collection('evento').doc('fotos').set({photos:{}});
+    document.getElementById('tab-setup').style.opacity='';
+    document.getElementById('tab-setup').style.pointerEvents='';
+    aTab('setup');
+  }catch(e){alert('❌ Error: '+e.message);}
+  btn.disabled=false;
 }
-function newElectionFresh(){
+async function newElectionFresh(){
   if(!confirm('¿Nueva elección completamente desde cero? Se borrará todo.'))return;
-  PHOTOS={};
-  G={eventName:'',participations:[],judges:[],currentPart:0,
-     closed:false,votes:{},juryProg:{},started:false,judgeCode:''};
-  sv();
-  document.getElementById('tab-setup').style.opacity='';
-  document.getElementById('tab-setup').style.pointerEvents='';
-  document.getElementById('ev-name').value='';
-  document.getElementById('ev-judges').value='';
-  aTab('setup');drawParts();
+  var btn=document.getElementById('newelf-btn');btn.disabled=true;
+  try{
+    await clearCollection('votos');
+    await clearCollection('progreso');
+    await db.collection('evento').doc('config').set({
+      eventName:'',participations:[],judges:[],currentPart:0,closed:false,started:false
+    });
+    await db.collection('evento').doc('fotos').set({photos:{}});
+    document.getElementById('tab-setup').style.opacity='';
+    document.getElementById('tab-setup').style.pointerEvents='';
+    aTab('setup');
+  }catch(e){alert('❌ Error: '+e.message);}
+  btn.disabled=false;
 }
 
 // ═══════════════════════════════════════════
-//  JURADO — drawJuryPart CORREGIDO
-//  Foto izquierda fija, aspectos derecha adaptativos
+//  JURADO
 // ═══════════════════════════════════════════
 function renderJury(){
   document.getElementById('j-evname').textContent=G.eventName||'VOTACIÓN';
   document.getElementById('j-whoami').textContent='👤 Jurado: '+G.judgeCode;
   if(G.closed){hide('j-vote');hide('j-wait');show('j-closed');return;}
-  var myProg=G.juryProg[G.judgeCode]||0;
+  var myProg=JURYPROG[G.judgeCode]||0;
   if(myProg>G.currentPart){hide('j-vote');show('j-wait');hide('j-closed');return;}
   hide('j-wait');hide('j-closed');show('j-vote');
   drawJuryPart(myProg);
 }
 
+var currentDrawnPart=-1;
 function drawJuryPart(pi){
+  currentDrawnPart=pi;
   var p=G.participations[pi];
+  if(!p)return;
   document.getElementById('j-partbadge').textContent=(pi+1)+'/'+G.participations.length+': '+p.name;
   var cl=document.getElementById('j-cands');cl.innerHTML='';
   var vk=G.judgeCode+'_'+pi;
-  var ev=G.votes[vk]||{};
-  var locked=(G.juryProg[G.judgeCode]||0)>pi;
+  var ev=VOTES[vk]||{};
+  var locked=(JURYPROG[G.judgeCode]||0)>pi;
 
   p.candidates.forEach(function(cand,ci){
-    // ── FOTO: cargar directamente de PHOTOS con la clave exacta ──
     var photo=PHOTOS[photoKey(pi,ci)];
+    var cc=document.createElement('div');cc.className='jury-cand-card';
 
-    // ── CARD principal: flex horizontal ──
-    var cc=document.createElement('div');
-    cc.className='jury-cand-card';
-
-    // ── Columna FOTO ──
     var photoCol=document.createElement('div');
     photoCol.className='jury-photo-col';
     if(photo){
       var img=document.createElement('img');
-      img.src=photo;
-      img.alt='Foto de '+cand.name;
-      // Fallback por si el src está corrupto
+      img.src=photo;img.alt='Foto de '+cand.name;
       img.onerror=function(){
         photoCol.innerHTML='<div class="jury-photo-placeholder"><span style="font-size:36px;opacity:.35">👤</span><span style="font-size:11px;opacity:.45">Sin foto</span></div>';
       };
@@ -874,20 +971,15 @@ function drawJuryPart(pi){
     }
     cc.appendChild(photoCol);
 
-    // ── Columna BODY ──
     var body=document.createElement('div');
     body.className='jury-cand-body';
     body.innerHTML='<div class="jury-cand-name">'+esc(cand.name)+'</div>';
 
-    // Agregar filas de aspectos dinámicamente
     p.criteria.forEach(function(cr){
       var cur=(ev[cand.name]&&ev[cand.name][cr])||0;
-      var row=document.createElement('div');
-      row.className='score-row';
+      var row=document.createElement('div');row.className='score-row';
 
-      // Botones 1-10
-      var btnsDiv=document.createElement('div');
-      btnsDiv.className='btns10';
+      var btnsDiv=document.createElement('div');btnsDiv.className='btns10';
       for(var i=1;i<=10;i++){
         var btn=document.createElement('button');
         btn.className='sb'+(i<=cur?' on':'')+(locked?' lk':'');
@@ -899,87 +991,87 @@ function drawJuryPart(pi){
           (function(val,candName,crName){
             btn.onclick=function(){setScore(pi,candName,crName,val);};
           })(i,cand.name,cr);
-        } else {
-          btn.disabled=true;
-        }
+        } else btn.disabled=true;
         btnsDiv.appendChild(btn);
       }
-
-      // Valor actual
       var valDiv=document.createElement('div');
       valDiv.className='score-val';
       valDiv.id='sv-'+pi+'-'+sid(cand.name)+'-'+sid(cr);
       valDiv.textContent=cur||'—';
 
-      // Label
       var lblDiv=document.createElement('div');
-      lblDiv.className='score-lbl';
-      lblDiv.textContent=cr;
+      lblDiv.className='score-lbl';lblDiv.textContent=cr;
 
-      row.appendChild(lblDiv);
-      row.appendChild(btnsDiv);
-      row.appendChild(valDiv);
+      row.appendChild(lblDiv);row.appendChild(btnsDiv);row.appendChild(valDiv);
       body.appendChild(row);
     });
 
-    cc.appendChild(body);
-    cl.appendChild(cc);
+    cc.appendChild(body);cl.appendChild(cc);
   });
 
   if(!locked)checkAllDone(pi);
 }
 
-function setScore(pi,cand,cr,val){
+var savingScore=false;
+async function setScore(pi,cand,cr,val){
+  if(savingScore)return;
+  savingScore=true;
   var vk=G.judgeCode+'_'+pi;
-  if(!G.votes[vk])G.votes[vk]={};
-  if(!G.votes[vk][cand])G.votes[vk][cand]={};
-  G.votes[vk][cand][cr]=Number(val);sv();
-  // Actualizar botones
+  // Actualización optimista local
+  if(!VOTES[vk])VOTES[vk]={};
+  if(!VOTES[vk][cand])VOTES[vk][cand]={};
+  VOTES[vk][cand][cr]=Number(val);
+
   document.querySelectorAll('[data-c="'+sid(cand)+'"][data-r="'+sid(cr)+'"]').forEach(function(b){
     b.classList.toggle('on',parseInt(b.getAttribute('data-v'))<=val);
   });
   var sv2=document.getElementById('sv-'+pi+'-'+sid(cand)+'-'+sid(cr));
   if(sv2)sv2.textContent=val;
   checkAllDone(pi);
+
+  try{
+    await db.collection('votos').doc(vk).set(VOTES[vk]);
+  }catch(e){
+    alert('❌ Error guardando tu voto, intenta de nuevo: '+e.message);
+  }
+  savingScore=false;
 }
 
 function checkAllDone(pi){
   var vk=G.judgeCode+'_'+pi;
   var p=G.participations[pi];var ok=true;
+  var votes=VOTES[vk]||{};
   p.candidates.forEach(function(c){
     p.criteria.forEach(function(cr){
-      if(!(G.votes[vk]&&G.votes[vk][c.name]&&G.votes[vk][c.name][cr]))ok=false;
+      if(!(votes[c.name]&&votes[c.name][cr]))ok=false;
     });
   });
   document.getElementById('j-next').classList.toggle('hidden',!ok);
   document.getElementById('j-nexthint').classList.toggle('hidden',!ok);
 }
 
-function juryNext(){
+async function juryNext(){
   if(!confirm('¿Confirmas que terminaste esta participación?\nNo podrás regresar ni editar tus calificaciones.'))return;
-  var np=(G.juryProg[G.judgeCode]||0)+1;
-  G.juryProg[G.judgeCode]=np;sv();
-  document.getElementById('j-next').classList.add('hidden');
-  document.getElementById('j-nexthint').classList.add('hidden');
+  var btn=document.getElementById('j-next');
+  btn.disabled=true;
+  var np=(JURYPROG[G.judgeCode]||0)+1;
+  try{
+    await db.collection('progreso').doc(G.judgeCode).set({prog:np});
+  }catch(e){alert('❌ Error: '+e.message);btn.disabled=false;return;}
+  JURYPROG[G.judgeCode]=np;
+  hide('j-next');hide('j-nexthint');
   if(G.closed||np>=G.participations.length){hide('j-vote');show('j-closed');return;}
-  if(np>G.currentPart){
-    hide('j-vote');show('j-wait');
-    var poll=setInterval(function(){
-      ld();
-      if(G.closed){clearInterval(poll);hide('j-wait');show('j-closed');return;}
-      var prog=G.juryProg[G.judgeCode]||0;
-      if(prog<=G.currentPart){
-        clearInterval(poll);hide('j-wait');show('j-vote');drawJuryPart(prog);
-      }
-    },3000);
-    return;
-  }
+  if(np>G.currentPart){hide('j-vote');show('j-wait');return;}
   drawJuryPart(np);
+  btn.disabled=false;
 }
 
 // ─── KEY LISTENERS ────────────────────────────
 document.getElementById('l-jcode').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 document.getElementById('l-pass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+
+// ─── ARRANQUE ─────────────────────────────────
+initFirebase();
 </script>
 </body>
 </html>
